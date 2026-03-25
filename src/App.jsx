@@ -682,7 +682,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
 
   const thS = { ...thStyle, fontSize: 10, cursor: "pointer" };
   const mkBtn = (active, color = C.cyan) => ({
-    padding: "3px 8px", fontSize: 10, fontWeight: 600,
+    padding: "5px 12px", fontSize: 15, fontWeight: 600,
     border: `1px solid ${active ? color : C.border}`, borderRadius: 4,
     background: active ? `${color}22` : "transparent",
     color: active ? color : C.textDim, cursor: "pointer",
@@ -725,7 +725,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
 
           {/* Row 1: universe / price / limit / run / CSV / 프리셋 */}
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-            <select value={universe} onChange={e => setUniverse(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 6px", fontSize: 11 }}>
+            <select value={universe} onChange={e => setUniverse(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 15 }}>
               <option value="nasdaq100">NASDAQ 100</option>
               <option value="sp500">S&amp;P 500</option>
               <option value="sp100">S&amp;P 100</option>
@@ -734,30 +734,30 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
               <option value="custom">직접 입력</option>
             </select>
             {universe === "custom" && (
-              <input value={customInput} onChange={e => setCustomInput(e.target.value)} placeholder="AAPL,MSFT,NVDA" style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 6px", fontSize: 11, width: 160 }} />
+              <input value={customInput} onChange={e => setCustomInput(e.target.value)} placeholder="AAPL,MSFT,NVDA" style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 15, width: 160 }} />
             )}
-            <span style={{ fontSize: 10, color: C.textDim }}>$</span>
-            <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 4px", fontSize: 11, width: 48 }} />
-            <span style={{ fontSize: 10, color: C.textDim }}>~</span>
-            <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 4px", fontSize: 11, width: 58 }} />
-            <span style={{ fontSize: 10, color: C.textDim }}>최대</span>
-            <input type="number" value={limit} onChange={e => setLimit(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 4px", fontSize: 11, width: 46 }} />
-            <button onClick={handleRun} style={{ padding: "4px 14px", fontSize: 11, fontWeight: 700, border: "none", borderRadius: 4, background: running ? C.red : C.green, color: "#000", cursor: "pointer" }}>
+            <span style={{ fontSize: 14, color: C.textDim }}>$</span>
+            <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 58 }} />
+            <span style={{ fontSize: 14, color: C.textDim }}>~</span>
+            <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 70 }} />
+            <span style={{ fontSize: 14, color: C.textDim }}>최대</span>
+            <input type="number" value={limit} onChange={e => setLimit(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 56 }} />
+            <button onClick={handleRun} style={{ padding: "6px 18px", fontSize: 15, fontWeight: 700, border: "none", borderRadius: 4, background: running ? C.red : C.green, color: "#000", cursor: "pointer" }}>
               {running ? "■ 중지" : "▶ 실행"}
             </button>
-            <span style={{ fontSize: 10, color: C.textDim, minWidth: 52 }}>{filtered.length}/{results.length}개</span>
+            <span style={{ fontSize: 14, color: C.textDim, minWidth: 52 }}>{filtered.length}/{results.length}개</span>
             {spyModel && <SpyBadge model={spyModel} />}
 
             {/* ⑦ CSV */}
             {sorted.length > 0 && (
-              <button onClick={exportCSV} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${C.blue}`, borderRadius: 4, background: "transparent", color: C.blue, cursor: "pointer" }}>
+              <button onClick={exportCSV} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${C.blue}`, borderRadius: 4, background: "transparent", color: C.blue, cursor: "pointer" }}>
                 ⬇ CSV
               </button>
             )}
 
             {/* ④ 프리셋 */}
             <div style={{ position: "relative" }}>
-              <button onClick={() => setPresetDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${C.purple}`, borderRadius: 4, background: "transparent", color: C.purple, cursor: "pointer" }}>
+              <button onClick={() => setPresetDropdown(p => !p)} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${C.purple}`, borderRadius: 4, background: "transparent", color: C.purple, cursor: "pointer" }}>
                 📋 프리셋
               </button>
               {presetDropdown && (
@@ -783,11 +783,11 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {/* ⑧ 알림 */}
             {"Notification" in window && (
               <div style={{ position: "relative" }}>
-                <button onClick={toggleNotify} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${notifyEnabled ? C.green : C.border}`, borderRadius: 4, background: notifyEnabled ? `${C.green}22` : "transparent", color: notifyEnabled ? C.green : C.textDim, cursor: "pointer" }}>
+                <button onClick={toggleNotify} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${notifyEnabled ? C.green : C.border}`, borderRadius: 4, background: notifyEnabled ? `${C.green}22` : "transparent", color: notifyEnabled ? C.green : C.textDim, cursor: "pointer" }}>
                   🔔 {notifyEnabled ? "ON" : "OFF"}
                 </button>
                 {notifyEnabled && (
-                  <button onClick={() => setShowNotifyPanel(p => !p)} style={{ marginLeft: 2, padding: "3px 5px", fontSize: 10, border: `1px solid ${C.border}`, borderRadius: 4, background: "transparent", color: C.textDim, cursor: "pointer" }}>⚙</button>
+                  <button onClick={() => setShowNotifyPanel(p => !p)} style={{ marginLeft: 2, padding: "5px 8px", fontSize: 15, border: `1px solid ${C.border}`, borderRadius: 4, background: "transparent", color: C.textDim, cursor: "pointer" }}>⚙</button>
                 )}
                 {showNotifyPanel && notifyEnabled && (
                   <div style={{ position: "absolute", top: "100%", right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2, padding: "8px 12px" }}>

@@ -3,9 +3,12 @@ import cors from "cors";
 import NodeCache from "node-cache";
 import axios from "axios";
 import { WebSocket } from "ws";
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
@@ -1032,6 +1035,7 @@ app.get("/api/cot/:ticker", async (req, res) => {
 // WebSocket 연결 상태 확인 포함한 헬스체크
 app.get("/api/health", (_, res) => res.json({
     ok: true,
+    version: "v20260325",
     time: new Date().toISOString(),
     finnhub: {
         token: !!FINNHUB_TOKEN,
@@ -1251,6 +1255,14 @@ app.get("/api/triggers", async (req, res) => {
         console.error("/api/triggers:", e.message);
         res.status(500).json({ error: e.message });
     }
+});
+
+// ─── 프로덕션: React 빌드 정적 파일 서빙 ───────────────────────
+const clientDist = path.join(__dirname, "..", "dist");
+app.use(express.static(clientDist));
+app.use((req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(clientDist, "index.html"));
 });
 
 // ─── 전체 티커 (프런트와 동기화) ─────────────────────────────

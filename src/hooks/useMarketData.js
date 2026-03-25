@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { calcScore, scoreToSignal } from "../utils/indicators.js";
 
-const API = "http://localhost:3001";
+const API = "";
 const REFRESH_INTERVAL = 30000;
 
 const STOCK_GROUPS = {

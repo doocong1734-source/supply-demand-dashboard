@@ -225,7 +225,7 @@ function MScorePanel() {
   const [loading, setLoading] = useState(true);
   const fetchData = useCallback(async () => {
     try {
-      const r = await fetch("http://localhost:3001/api/mscore");
+      const r = await fetch("/api/mscore");
       setData(await r.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -310,7 +310,7 @@ function TriggerPanel() {
   const [chartTicker, setChartTicker] = useState(null);
   const fetchData = useCallback(async () => {
     try {
-      const r = await fetch("http://localhost:3001/api/triggers");
+      const r = await fetch("/api/triggers");
       setData(await r.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -530,7 +530,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
   const [spyModel, setSpyModel] = useState(null);
   const [mscore, setMscore] = useState(null);
   useEffect(() => {
-    fetch("http://localhost:3001/api/mscore").then(r => r.json()).then(d => {
+    fetch("/api/mscore").then(r => r.json()).then(d => {
       setMscore(d);
       // M-Score BULL 시 stage2+vcp 자동 활성화
       if (d.score >= 50) setActiveScreens(prev => { const n = new Set(prev); n.add("stage2"); n.add("vcp"); return n; });
@@ -574,7 +574,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
     setRunning(true);
     const params = new URLSearchParams({ universe, minPrice, maxPrice, limit });
     if (universe === "custom") params.set("custom", customInput);
-    const es = new EventSource(`http://localhost:3001/api/screener/run?${params}`);
+    const es = new EventSource(`/api/screener/run?${params}`);
     esRef.current = es;
     es.addEventListener("marketStatus", e => setSpyModel(JSON.parse(e.data)));
     es.addEventListener("progress", e => setProgress(JSON.parse(e.data)));
@@ -1052,8 +1052,8 @@ export default function Dashboard() {
       for (const t of missing) {
         try {
           const [quoteRes, indRes] = await Promise.all([
-            fetch(`http://localhost:3001/api/quotes?tickers=${t}`).then(r => r.json()),
-            fetch(`http://localhost:3001/api/indicators/${t}`).then(r => r.json()),
+            fetch(`/api/quotes?tickers=${t}`).then(r => r.json()),
+            fetch(`/api/indicators/${t}`).then(r => r.json()),
           ]);
           const q = quoteRes[t] || {};
           const ind = indRes || {};
@@ -1213,8 +1213,8 @@ export default function Dashboard() {
     setSearchResult(null);
     try {
       const [quoteRes, indRes] = await Promise.all([
-        fetch(`http://localhost:3001/api/quotes?tickers=${t}`).then(r => r.json()),
-        fetch(`http://localhost:3001/api/indicators/${t}`).then(r => r.json()),
+        fetch(`/api/quotes?tickers=${t}`).then(r => r.json()),
+        fetch(`/api/indicators/${t}`).then(r => r.json()),
       ]);
       const q = quoteRes[t] || {};
       const ind = indRes || {};

@@ -1428,8 +1428,10 @@ export default function Dashboard() {
           {/* ── 트리거 뷰 ── */}
           {viewMode === "trigger" && <TriggerPanel />}
 
-          {/* ── 스크리너 뷰 ── */}
-          {viewMode === "screener" && <ScreenerPanel lists={lists} activeIdx={activeIdx} addToList={addToList} addList={addList} isFavorite={isFavorite} isInAnyList={isInAnyList} toggleFavorite={toggleFavorite} onGoMScore={() => setViewMode("mscore")} />}
+          {/* ── 스크리너 뷰 (항상 마운트, 탭 전환 시 상태 유지) ── */}
+          <div style={{ display: viewMode === "screener" ? "flex" : "none", flex: 1, height: "100%", overflow: "hidden" }}>
+            <ScreenerPanel lists={lists} activeIdx={activeIdx} addToList={addToList} addList={addList} isFavorite={isFavorite} isInAnyList={isInAnyList} toggleFavorite={toggleFavorite} onGoMScore={() => setViewMode("mscore")} />
+          </div>
 
           {/* ── 미주모 뷰 ── */}
           {viewMode === "mijoomo" && (

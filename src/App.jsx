@@ -307,6 +307,7 @@ function MScorePanel() {
 function TriggerPanel() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [chartTicker, setChartTicker] = useState(null);
   const fetchData = useCallback(async () => {
     try {
       const r = await fetch("http://localhost:3001/api/triggers");
@@ -325,12 +326,17 @@ function TriggerPanel() {
         </div>
         {items.map((item, i) => (
           <div key={i}
-            onClick={() => window.open(`https://finviz.com/chart.ashx?t=${item.ticker}&ty=c&ta=1&p=d`, "_blank")}
+            onClick={() => setChartTicker(item.ticker)}
             onMouseEnter={e => e.currentTarget.style.background = "#263040"}
-            onMouseLeave={e => e.currentTarget.style.background = "#1e2530"}
-            style={{ padding: "7px 12px", borderTop: `1px solid ${C.borderLight}`, display: "flex", gap: 12, alignItems: "center", cursor: "pointer", background: "#1e2530" }}>
+            onMouseLeave={e => e.currentTarget.style.background = chartTicker === item.ticker ? "#374151" : "#1e2530"}
+            style={{ padding: "7px 12px", borderTop: `1px solid ${C.borderLight}`, display: "flex", gap: 12, alignItems: "center", cursor: "pointer", background: chartTicker === item.ticker ? "#374151" : "#1e2530" }}>
             <b style={{ color: C.yellow, fontSize: 12, minWidth: 52 }}>{item.ticker}</b>
             {renderRow(item)}
+            <a href={`https://finviz.com/chart.ashx?t=${item.ticker}&ty=c&ta=1&p=d`} target="_blank" rel="noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{ marginLeft: "auto", fontSize: 10, color: C.textDim, textDecoration: "none", padding: "1px 6px", border: `1px solid ${C.border}`, borderRadius: 3 }}>
+              Finviz ↗
+            </a>
           </div>
         ))}
       </div>
@@ -343,50 +349,64 @@ function TriggerPanel() {
   const empty = !data || data.totalCount === 0;
 
   return (
-    <div style={{ padding: 16, maxWidth: 700, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16, fontWeight: 800 }}>⚡ 진입 트리거</span>
-          <span style={{ fontSize: 11, color: C.textDim }}>오늘 조건 충족 종목</span>
-          {data && <span style={{ background: (data.totalCount ?? 0) > 0 ? C.orange : "#555", color: "#fff", borderRadius: 8, padding: "1px 7px", fontSize: 10, fontWeight: 800 }}>{data.totalCount ?? 0}</span>}
+    <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+      {/* 왼쪽: 트리거 목록 */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 16, borderRight: chartTicker ? `1px solid ${C.border}` : "none" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16, fontWeight: 800 }}>⚡ 진입 트리거</span>
+            <span style={{ fontSize: 11, color: C.textDim }}>오늘 조건 충족 종목</span>
+            {data && <span style={{ background: (data.totalCount ?? 0) > 0 ? C.orange : "#555", color: "#fff", borderRadius: 8, padding: "1px 7px", fontSize: 10, fontWeight: 800 }}>{data.totalCount ?? 0}</span>}
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {data?.cacheStats && <span style={{ fontSize: 10, color: C.textDim }}>캐시 {data.cacheStats.cached}/{data.cacheStats.total}</span>}
+            <span style={{ fontSize: 10, color: C.textDim }}>{timePart}</span>
+            <button onClick={fetchData} style={{ padding: "3px 10px", fontSize: 11, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {data?.cacheStats && <span style={{ fontSize: 10, color: C.textDim }}>캐시 {data.cacheStats.cached}/{data.cacheStats.total}</span>}
-          <span style={{ fontSize: 10, color: C.textDim }}>{timePart}</span>
-          <button onClick={fetchData} style={{ padding: "3px 10px", fontSize: 11, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
-        </div>
+
+        {data?.cacheStats?.cached === 0 && (
+          <div style={{ padding: "8px 12px", borderRadius: 6, background: "#1f2937", border: `1px solid ${C.border}`, marginBottom: 10, fontSize: 11, color: C.yellow }}>
+            💡 스크리너를 먼저 실행하면 캐시된 데이터로 트리거를 확인할 수 있습니다.
+          </div>
+        )}
+
+        {empty ? (
+          <div style={{ padding: 40, textAlign: "center", color: C.textDim, fontSize: 13 }}>오늘 조건 충족 종목 없음</div>
+        ) : (
+          <>
+            <Section icon="🚀" title="52주 신고가 돌파" items={data.breakout52w} renderRow={item => <>
+              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: C.textDim }}>TPR {item.tpr}</span>
+              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+            </>} />
+            <Section icon="📐" title="VCP 완성" items={data.vcpComplete} renderRow={item => <>
+              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: C.cyan }}>VCP점수 {item.vcpScore}</span>
+              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+            </>} />
+            <Section icon="📈" title="RS 신고가" items={data.rsMakingHigh} renderRow={item => <>
+              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: C.blue }}>RS/SPY {item.rsVsSpy}</span>
+              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+            </>} />
+            <Section icon="🎯" title="포켓피봇" items={data.pocketPivot} renderRow={item => <>
+              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+            </>} />
+          </>
+        )}
       </div>
 
-      {data?.cacheStats?.cached === 0 && (
-        <div style={{ padding: "8px 12px", borderRadius: 6, background: "#1f2937", border: `1px solid ${C.border}`, marginBottom: 10, fontSize: 11, color: C.yellow }}>
-          💡 스크리너를 먼저 실행하면 캐시된 데이터로 트리거를 확인할 수 있습니다.
+      {/* 오른쪽: TradingView 차트 */}
+      {chartTicker && (
+        <div style={{ width: 1040, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontWeight: 700, fontSize: 14 }}>{chartTicker}</span>
+            <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
+          </div>
+          <TradingViewChart ticker={chartTicker} />
         </div>
-      )}
-
-      {empty ? (
-        <div style={{ padding: 40, textAlign: "center", color: C.textDim, fontSize: 13 }}>오늘 조건 충족 종목 없음</div>
-      ) : (
-        <>
-          <Section icon="🚀" title="52주 신고가 돌파" items={data.breakout52w} renderRow={item => <>
-            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-            <span style={{ fontSize: 10, color: C.textDim }}>TPR {item.tpr}</span>
-            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
-          </>} />
-          <Section icon="📐" title="VCP 완성" items={data.vcpComplete} renderRow={item => <>
-            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-            <span style={{ fontSize: 10, color: C.cyan }}>VCP점수 {item.vcpScore}</span>
-            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
-          </>} />
-          <Section icon="📈" title="RS 신고가" items={data.rsMakingHigh} renderRow={item => <>
-            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-            <span style={{ fontSize: 10, color: C.blue }}>RS/SPY {item.rsVsSpy}</span>
-            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
-          </>} />
-          <Section icon="🎯" title="포켓피봇" items={data.pocketPivot} renderRow={item => <>
-            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
-          </>} />
-        </>
       )}
     </div>
   );

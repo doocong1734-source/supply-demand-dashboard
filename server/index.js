@@ -1166,6 +1166,58 @@ app.get("/api/triggers", async (req, res) => {
         if (cached) return res.json(cached);
 
         const tickers = scrGetTickers("nasdaq100", "");
+        const cachedCount = tickers.filter(t => screenerCache.get(`scr4_${t}`)).length;
+
+        // 스크리너 캐시가 없으면 기술 분석만 직접 실행 (Finviz 제외, 빠른 폴백)
+        if (cachedCount === 0) {
+            console.log("[triggers] 캐시 없음 — nasdaq100 기술 분석 폴백 실행");
+            let spyCloses = null;
+            try {
+                const spyModel = await scrSpyModel();
+                if (spyModel?.closes) spyCloses = spyModel.closes;
+            } catch (_) {}
+
+            for (const ticker of tickers) {
+                try {
+                    const { ohlcv } = await fetchYFChart(ticker, 400);
+                    if (!ohlcv || ohlcv.length < 50) continue;
+                    const closes = ohlcv.map(d => d.close);
+                    const price = closes[closes.length - 1];
+                    if (price < 5) continue;
+
+                    const tpr = scrTPR(closes);
+                    const rpr = scrRPR(closes);
+                    const rs12m = scrRS12m(closes);
+                    const stage2 = scrIsStage2(closes);
+                    const stage2Loose = scrIsStage2Loose(closes);
+                    const stage2VeryLoose = scrIsStage2VeryLoose(closes);
+                    const { vcp, vcpScore } = scrVCP(closes, ohlcv);
+                    const { rsMakingHigh, rsVsSpy } = scrRsVsSpy(closes, spyCloses);
+                    const pocketPivot = scrPocketPivot(ohlcv);
+                    const nearBreakout = scrNearBreakout(closes, ohlcv);
+
+                    screenerCache.set(`scr4_${ticker}`, {
+                        ticker, price: Math.round(price * 100) / 100,
+                        tpr, rpr,
+                        rs12m: rs12m !== null ? Math.round(rs12m * 10) / 10 : null,
+                        rsVsSpy, vcpScore,
+                        stage2, stage2Loose, stage2VeryLoose,
+                        bnb: price >= 10 && stage2 && ["A+", "A", "B"].includes(tpr),
+                        tprA: ["A+", "A"].includes(tpr),
+                        momentum: price >= 10 && stage2 && rpr >= 70,
+                        qualifier: price >= 2 && stage2Loose,
+                        top5Rpr: rpr >= 80,
+                        vcp, rsMakingHigh, pocketPivot, nearBreakout,
+                        fundGrade: false,
+                        pe: null, fpe: null, epsThisY: null, epsNextY: null,
+                        eps5Y: null, salesQQ: null, instTrans: null, shortFloat: null, roe: null,
+                    });
+                    await new Promise(r => setTimeout(r, 80 + Math.random() * 40));
+                } catch (_) {}
+            }
+            console.log("[triggers] 폴백 분석 완료");
+        }
+
         const breakout52w = [], vcpComplete = [], rsMakingHighArr = [], pocketPivotArr = [];
 
         for (const ticker of tickers) {
@@ -1183,7 +1235,7 @@ app.get("/api/triggers", async (req, res) => {
                 pocketPivotArr.push({ ticker, price: price || 0, stage2, rs12m: rs12m || 0 });
         }
 
-        const cachedCount = tickers.filter(t => screenerCache.get(`scr4_${t}`)).length;
+        const finalCached = tickers.filter(t => screenerCache.get(`scr4_${t}`)).length;
         const result = {
             breakout52w,
             vcpComplete,
@@ -1191,7 +1243,7 @@ app.get("/api/triggers", async (req, res) => {
             pocketPivot: pocketPivotArr,
             updatedAt: new Date().toISOString(),
             totalCount: breakout52w.length + vcpComplete.length + rsMakingHighArr.length + pocketPivotArr.length,
-            cacheStats: { cached: cachedCount, total: tickers.length },
+            cacheStats: { cached: finalCached, total: tickers.length },
         };
         cache.set(cKey, result, 300);
         res.json(result);

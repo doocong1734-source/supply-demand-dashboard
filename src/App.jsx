@@ -220,6 +220,178 @@ function RankColumn({ title, rows, valueKey, color, isVol }) {
   );
 }
 
+function MScorePanel() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const fetchData = useCallback(async () => {
+    try {
+      const r = await fetch("http://localhost:3001/api/mscore");
+      setData(await r.json());
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { fetchData(); const t = setInterval(fetchData, 300000); return () => clearInterval(t); }, [fetchData]);
+
+  if (loading) return <div style={{ padding: 30, color: C.textDim, textAlign: "center" }}>M-Score 로딩 중...</div>;
+  if (!data || data.error) return <div style={{ padding: 30, color: C.red, textAlign: "center" }}>데이터 로드 실패</div>;
+
+  const { score, status, label, color, details, spy, qqq, updatedAt } = data;
+  const bgColor = `${color}10`;
+  const timePart = updatedAt ? new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "--:--";
+
+  const DetailBar = ({ lbl, value, max }) => {
+    const pct = max > 0 ? Math.min(100, Math.max(0, (Math.abs(value) / max) * 100)) : 0;
+    const isNeg = value < 0;
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 36px", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 11, color: C.textDim }}>{lbl}</span>
+        <div style={{ height: 6, background: "#333", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ width: `${pct}%`, height: "100%", background: isNeg ? C.red : color, borderRadius: 3 }} />
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 700, color: isNeg ? C.red : color, textAlign: "right" }}>{value > 0 ? "+" : ""}{value}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
+      <div style={{ padding: "14px 18px", borderRadius: 8, background: bgColor, border: `1px solid ${color}44`, marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+          <span style={{ fontSize: 18, fontWeight: 800 }}>🎯 M-Score</span>
+          <span style={{ fontSize: 36, fontWeight: 900, color, lineHeight: 1 }}>{score}</span>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color }}>{status}</div>
+            <div style={{ fontSize: 12, color: C.textDim }}>{label}</div>
+          </div>
+          <button onClick={fetchData} style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 10, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
+        </div>
+        <div style={{ height: 8, background: "#333", borderRadius: 4, overflow: "hidden", marginBottom: 4 }}>
+          <div style={{ width: `${Math.min(100, Math.max(0, (score + 100) / 2))}%`, height: "100%", background: color, borderRadius: 4, transition: "width 0.5s" }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.textDim }}>
+          <span>-100 (BEAR)</span><span>{score}</span><span>+100 (BULL)</span>
+        </div>
+      </div>
+
+      <div style={{ padding: "12px 14px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, marginBottom: 8 }}>세부 점수</div>
+        <DetailBar lbl="MA 포지션" value={details.maPosition} max={25} />
+        <DetailBar lbl="MA200 기울기" value={details.ma200Slope} max={10} />
+        <DetailBar lbl="광폭지수" value={details.breadth} max={15} />
+        <DetailBar lbl="52주 고점비" value={details.vs52wHigh} max={10} />
+        <DetailBar lbl="QQQ vs SPY" value={details.qqqVsSpy} max={5} />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+        {[{ lbl: "SPY", d: spy }, { lbl: "QQQ", d: qqq }].map(({ lbl, d }) => (
+          <div key={lbl} style={{ padding: "10px 12px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textBright, marginBottom: 4 }}>
+              {lbl} <span style={{ color: C.textDim, fontWeight: 400 }}>${d?.price}</span>
+              {" "}<span style={{ color: (d?.change1d ?? 0) >= 0 ? C.green : C.red, fontSize: 11 }}>{(d?.change1d ?? 0) > 0 ? "+" : ""}{d?.change1d}%</span>
+            </div>
+            <div style={{ fontSize: 10, color: C.textDim }}>SMA50: {d?.sma50?.toFixed(0)} · SMA150: {d?.sma150?.toFixed(0)} · SMA200: {d?.sma200?.toFixed(0)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding: "8px 12px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ fontSize: 11, color: C.textDim }}>광폭지수</span>
+        <span style={{ fontSize: 12 }}>SPXA200R <b style={{ color: C.text }}>{details.breadthRaw?.spxa200r}%</b></span>
+        <span style={{ fontSize: 12 }}>SPXA50R <b style={{ color: C.text }}>{details.breadthRaw?.spxa50r}%</b></span>
+        <span style={{ fontSize: 10, color: C.textDim, marginLeft: "auto" }}>갱신: {timePart}</span>
+      </div>
+    </div>
+  );
+}
+
+function TriggerPanel() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const fetchData = useCallback(async () => {
+    try {
+      const r = await fetch("http://localhost:3001/api/triggers");
+      setData(await r.json());
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { fetchData(); const t = setInterval(fetchData, 300000); return () => clearInterval(t); }, [fetchData]);
+
+  const Section = ({ icon, title, items, renderRow }) => {
+    if (!items || items.length === 0) return null;
+    return (
+      <div style={{ marginBottom: 10, borderRadius: 6, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div style={{ padding: "7px 12px", background: C.surface, fontSize: 12, fontWeight: 700, color: C.textBright }}>
+          {icon} {title} <span style={{ color: C.textDim, fontWeight: 400 }}>({items.length})</span>
+        </div>
+        {items.map((item, i) => (
+          <div key={i}
+            onClick={() => window.open(`https://finviz.com/chart.ashx?t=${item.ticker}&ty=c&ta=1&p=d`, "_blank")}
+            onMouseEnter={e => e.currentTarget.style.background = "#263040"}
+            onMouseLeave={e => e.currentTarget.style.background = "#1e2530"}
+            style={{ padding: "7px 12px", borderTop: `1px solid ${C.borderLight}`, display: "flex", gap: 12, alignItems: "center", cursor: "pointer", background: "#1e2530" }}>
+            <b style={{ color: C.yellow, fontSize: 12, minWidth: 52 }}>{item.ticker}</b>
+            {renderRow(item)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  if (loading) return <div style={{ padding: 30, color: C.textDim, textAlign: "center" }}>트리거 로딩 중...</div>;
+
+  const timePart = data?.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "--:--";
+  const empty = !data || data.totalCount === 0;
+
+  return (
+    <div style={{ padding: 16, maxWidth: 700, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16, fontWeight: 800 }}>⚡ 진입 트리거</span>
+          <span style={{ fontSize: 11, color: C.textDim }}>오늘 조건 충족 종목</span>
+          {data && <span style={{ background: (data.totalCount ?? 0) > 0 ? C.orange : "#555", color: "#fff", borderRadius: 8, padding: "1px 7px", fontSize: 10, fontWeight: 800 }}>{data.totalCount ?? 0}</span>}
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {data?.cacheStats && <span style={{ fontSize: 10, color: C.textDim }}>캐시 {data.cacheStats.cached}/{data.cacheStats.total}</span>}
+          <span style={{ fontSize: 10, color: C.textDim }}>{timePart}</span>
+          <button onClick={fetchData} style={{ padding: "3px 10px", fontSize: 11, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
+        </div>
+      </div>
+
+      {data?.cacheStats?.cached === 0 && (
+        <div style={{ padding: "8px 12px", borderRadius: 6, background: "#1f2937", border: `1px solid ${C.border}`, marginBottom: 10, fontSize: 11, color: C.yellow }}>
+          💡 스크리너를 먼저 실행하면 캐시된 데이터로 트리거를 확인할 수 있습니다.
+        </div>
+      )}
+
+      {empty ? (
+        <div style={{ padding: 40, textAlign: "center", color: C.textDim, fontSize: 13 }}>오늘 조건 충족 종목 없음</div>
+      ) : (
+        <>
+          <Section icon="🚀" title="52주 신고가 돌파" items={data.breakout52w} renderRow={item => <>
+            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+            <span style={{ fontSize: 10, color: C.textDim }}>TPR {item.tpr}</span>
+            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+          </>} />
+          <Section icon="📐" title="VCP 완성" items={data.vcpComplete} renderRow={item => <>
+            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+            <span style={{ fontSize: 10, color: C.cyan }}>VCP점수 {item.vcpScore}</span>
+            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+          </>} />
+          <Section icon="📈" title="RS 신고가" items={data.rsMakingHigh} renderRow={item => <>
+            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+            <span style={{ fontSize: 10, color: C.blue }}>RS/SPY {item.rsVsSpy}</span>
+            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+          </>} />
+          <Section icon="🎯" title="포켓피봇" items={data.pocketPivot} renderRow={item => <>
+            <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
+            <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+          </>} />
+        </>
+      )}
+    </div>
+  );
+}
+
 function RankingsPanel({ data }) {
   const [period, setPeriod] = useState("daily");
   const [filterAUM, setFilterAUM] = useState(true);
@@ -322,7 +494,7 @@ function VcpBar({ score }) {
   );
 }
 
-function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInAnyList, toggleFavorite }) {
+function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInAnyList, toggleFavorite, onGoMScore }) {
   const [universe, setUniverse] = useState("nasdaq100");
   const [customInput, setCustomInput] = useState("AAPL,MSFT,NVDA,TSLA");
   const [minPrice, setMinPrice] = useState(5);
@@ -336,6 +508,14 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
   const [sortDir, setSortDir] = useState("desc");
   const [chartTicker, setChartTicker] = useState(null);
   const [spyModel, setSpyModel] = useState(null);
+  const [mscore, setMscore] = useState(null);
+  useEffect(() => {
+    fetch("http://localhost:3001/api/mscore").then(r => r.json()).then(d => {
+      setMscore(d);
+      // M-Score BULL 시 stage2+vcp 자동 활성화
+      if (d.score >= 50) setActiveScreens(prev => { const n = new Set(prev); n.add("stage2"); n.add("vcp"); return n; });
+    }).catch(() => {});
+  }, []);
   const [addDropdown, setAddDropdown] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   // ① 필터 로직: "any"=OR, "all"=AND전체, "group-and"=그룹내OR+그룹간AND
@@ -488,8 +668,10 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
     color: active ? color : C.textDim, cursor: "pointer",
   });
   const pct = progress.total > 0 ? (progress.i / progress.total) * 100 : 0;
-  // ⑤ 시장 타이밍 경고
-  const spyWarning = spyModel && (spyModel.status === "Caution" || spyModel.status === "Bear");
+  // ⑤ 시장 타이밍 경고 (M-Score 연동)
+  const mscoreBear = mscore && mscore.score <= -20;
+  const mscoreCaution = mscore && mscore.score < 20 && mscore.score > -20;
+  const spyWarning = mscoreBear || mscoreCaution || (spyModel && (spyModel.status === "Caution" || spyModel.status === "Bear"));
 
   return (
     <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
@@ -497,11 +679,23 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
         {/* ── Controls ── */}
         <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
 
-          {/* ⑤ 시장 타이밍 경고 배너 */}
+          {/* M-Score 미니 배지 */}
+          {mscore && (
+            <div style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                onClick={onGoMScore}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 10px", borderRadius: 12, background: `${mscore.color}20`, border: `1px solid ${mscore.color}66`, color: mscore.color, fontSize: 11, fontWeight: 700, cursor: onGoMScore ? "pointer" : "default" }}>
+                🎯 {mscore.status} {mscore.score}
+              </span>
+              <span style={{ fontSize: 10, color: C.textDim }}>{mscore.label}</span>
+            </div>
+          )}
+
+          {/* ⑤ 시장 타이밍 경고 배너 (M-Score 연동) */}
           {spyWarning && (
-            <div style={{ marginBottom: 6, padding: "5px 10px", borderRadius: 4, background: spyModel.status === "Bear" ? "#ef444422" : "#f59e0b22", border: `1px solid ${spyModel.status === "Bear" ? C.red : C.yellow}`, fontSize: 10, color: spyModel.status === "Bear" ? C.red : C.yellow, display: "flex", gap: 8, alignItems: "center" }}>
-              <span>{spyModel.status === "Bear" ? "🔴 약세장" : "🟡 주의구간"}: SPY가 MA50 하방 ({spyModel.status === "Bear" ? "MA200도 하방" : "MA200 상방"})</span>
-              <span style={{ color: C.textDim }}>→ 권장: TPR A+ 필터 + 엄격 모드 (그룹AND) 사용</span>
+            <div style={{ marginBottom: 6, padding: "5px 10px", borderRadius: 4, background: mscoreBear ? "#ef444422" : "#f59e0b22", border: `1px solid ${mscoreBear ? C.red : C.yellow}`, fontSize: 10, color: mscoreBear ? C.red : C.yellow, display: "flex", gap: 8, alignItems: "center" }}>
+              <span>{mscoreBear ? "🔴 BEAR 구간" : "🟡 주의구간"}: M-Score {mscore ? mscore.score : ""} {mscoreBear ? "(현금 비중 확대 권장)" : "(선별적 매수)"}</span>
+              <span style={{ color: C.textDim }}>→ TPR A+ 필터 + 엄격 모드 권장</span>
               <button onClick={() => { setActiveScreens(new Set(["bnb", "stage2", "tprA", "fundGrade"])); setFilterMode("group-and"); }}
                 style={{ padding: "1px 7px", fontSize: 9, border: `1px solid ${C.yellow}`, borderRadius: 3, background: "transparent", color: C.yellow, cursor: "pointer" }}>
                 자동 적용
@@ -1046,7 +1240,7 @@ export default function Dashboard() {
       )}
 
       {/* ═══ LEFT PANEL ═══ */}
-      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo") ? "none" : `1px solid ${C.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${C.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Header */}
         <div style={{ padding: "8px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -1058,6 +1252,8 @@ export default function Dashboard() {
                 ★ 관심종목 {totalCount > 0 && <span style={{ marginLeft: 3, background: C.yellow, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
               </button>
               <button style={btnStyle(viewMode === "rankings", C.cyan)} onClick={() => setViewMode("rankings")}>📊 랭킹</button>
+              <button style={btnStyle(viewMode === "mscore", C.green)} onClick={() => setViewMode("mscore")}>🎯 M-Score</button>
+              <button style={btnStyle(viewMode === "trigger", C.orange)} onClick={() => setViewMode("trigger")}>⚡ 트리거</button>
               <button style={btnStyle(viewMode === "screener", C.orange)} onClick={() => setViewMode("screener")}>🔍 스크리너</button>
               <button style={btnStyle(viewMode === "mijoomo", C.teal)} onClick={() => setViewMode("mijoomo")}>🌐 미주모</button>
               {lastUpdated && (
@@ -1206,8 +1402,14 @@ export default function Dashboard() {
           {/* ── 랭킹 뷰 ── */}
           {viewMode === "rankings" && data && <RankingsPanel data={data} />}
 
+          {/* ── M-Score 뷰 ── */}
+          {viewMode === "mscore" && <MScorePanel />}
+
+          {/* ── 트리거 뷰 ── */}
+          {viewMode === "trigger" && <TriggerPanel />}
+
           {/* ── 스크리너 뷰 ── */}
-          {viewMode === "screener" && <ScreenerPanel lists={lists} activeIdx={activeIdx} addToList={addToList} addList={addList} isFavorite={isFavorite} isInAnyList={isInAnyList} toggleFavorite={toggleFavorite} />}
+          {viewMode === "screener" && <ScreenerPanel lists={lists} activeIdx={activeIdx} addToList={addToList} addList={addList} isFavorite={isFavorite} isInAnyList={isInAnyList} toggleFavorite={toggleFavorite} onGoMScore={() => setViewMode("mscore")} />}
 
           {/* ── 미주모 뷰 ── */}
           {viewMode === "mijoomo" && (

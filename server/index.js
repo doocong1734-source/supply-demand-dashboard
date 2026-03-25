@@ -1041,6 +1041,166 @@ app.get("/api/health", (_, res) => res.json({
     },
 }));
 
+// ─── M-Score: 시장 타이밍 점수 ───────────────────────────────
+app.get("/api/mscore", async (req, res) => {
+    try {
+        const cKey = "mscore_v1";
+        const cached = cache.get(cKey);
+        if (cached) return res.json(cached);
+
+        // SPY data via scrSpyModel (reuse cached)
+        const spyModel = await scrSpyModel();
+        const spyCloses = spyModel.spyCloses || [];
+        const spyPrice = spyModel.spyPrice || 0;
+        const spyMa50 = spyModel.spyMa50 || 0;
+        const spyMa150 = spyModel.spyMa150 || 0;
+        const spyMa200 = spyModel.spyMa200 || 0;
+        const spySlope = spyModel.spySlope || 0;
+
+        // QQQ data
+        let qqqPrice = 0, qqqMa50 = 0, qqqMa150 = 0, qqqMa200 = 0, qqqChange1d = 0;
+        let qqqCloses = [];
+        try {
+            const qData = await fetchYFChart("QQQ", 300);
+            qqqCloses = qData.ohlcv.map(d => d.close);
+            qqqPrice = qqqCloses[qqqCloses.length - 1];
+            qqqMa50 = scrSMA(qqqCloses, 50) || 0;
+            qqqMa150 = scrSMA(qqqCloses, 150) || 0;
+            qqqMa200 = scrSMA(qqqCloses, 200) || 0;
+            if (qqqCloses.length >= 2)
+                qqqChange1d = Math.round(((qqqPrice - qqqCloses[qqqCloses.length - 2]) / qqqCloses[qqqCloses.length - 2]) * 10000) / 100;
+        } catch (e) { console.error("QQQ fetch:", e.message); }
+
+        // SPY 1d change
+        let spyChange1d = 0;
+        if (spyCloses.length >= 2)
+            spyChange1d = Math.round(((spyPrice - spyCloses[spyCloses.length - 2]) / spyCloses[spyCloses.length - 2]) * 10000) / 100;
+
+        // 1. MA Position (SPY): price > SMA50 > SMA150 > SMA200
+        let maPosition = -20;
+        if (spyMa50 > 0 && spyMa150 > 0 && spyMa200 > 0) {
+            if (spyPrice > spyMa50 && spyMa50 > spyMa150 && spyMa150 > spyMa200) maPosition = 25;
+            else if (spyPrice > spyMa50 && spyMa50 > spyMa150) maPosition = 15;
+            else if (spyPrice > spyMa200) maPosition = 5;
+        }
+
+        // 2. MA200 기울기 (최근 21일 기울기 양수면 +10)
+        const ma200Slope = spySlope > 0 ? 10 : 0;
+
+        // 3. 광폭지수
+        let breadthScore = 0;
+        let spxa200r = 50, spxa50r = 50;
+        try {
+            const bCached = cache.get("breadth");
+            if (bCached) {
+                spxa200r = bCached.breadth200 || 50;
+                spxa50r = bCached.breadth50 || 50;
+            } else {
+                const [r50, r200] = await Promise.allSettled([fetchYFChart("^SPXA50R", 5), fetchYFChart("^SPXA200R", 5)]);
+                if (r200.status === "fulfilled" && r200.value.ohlcv.length > 0)
+                    spxa200r = r200.value.ohlcv[r200.value.ohlcv.length - 1].close;
+                if (r50.status === "fulfilled" && r50.value.ohlcv.length > 0)
+                    spxa50r = r50.value.ohlcv[r50.value.ohlcv.length - 1].close;
+            }
+        } catch (e) { /* fallback 50 */ }
+        if (spxa200r > 60) breadthScore = 15;
+        else if (spxa200r > 40) breadthScore = 5;
+        else if (spxa200r < 30) breadthScore = -15;
+
+        // 4. 52주 고점 대비
+        let vs52wHigh = 0;
+        if (spyCloses.length >= 252) {
+            const h52 = Math.max(...spyCloses.slice(-252));
+            if (h52 > 0) {
+                const ratio = spyPrice / h52;
+                if (ratio >= 0.95) vs52wHigh = 10;
+                else if (ratio < 0.75) vs52wHigh = -10;
+            }
+        }
+
+        // 5. QQQ vs SPY 상대강도 (최근 20일 수익률)
+        let qqqVsSpy = 0;
+        if (qqqCloses.length >= 21 && spyCloses.length >= 21) {
+            const qRet = (qqqPrice - qqqCloses[qqqCloses.length - 21]) / qqqCloses[qqqCloses.length - 21];
+            const sRet = (spyPrice - spyCloses[spyCloses.length - 21]) / spyCloses[spyCloses.length - 21];
+            if (qRet > sRet) qqqVsSpy = 5;
+        }
+
+        const score = maPosition + ma200Slope + breadthScore + vs52wHigh + qqqVsSpy;
+        let status, label, color;
+        if (score >= 50)       { status = "BULL";    label = "공격적 매수 가능";  color = "#10b981"; }
+        else if (score >= 20)  { status = "CAUTION"; label = "선별적 매수";       color = "#f59e0b"; }
+        else if (score >= -19) { status = "NEUTRAL"; label = "관망";              color = "#9ca3af"; }
+        else                   { status = "BEAR";    label = "현금 비중 확대";    color = "#ef4444"; }
+
+        const result = {
+            score,
+            status,
+            label,
+            color,
+            details: {
+                maPosition,
+                ma200Slope,
+                breadth: breadthScore,
+                vs52wHigh,
+                qqqVsSpy,
+                breadthRaw: { spxa200r: Math.round(spxa200r * 10) / 10, spxa50r: Math.round(spxa50r * 10) / 10 },
+            },
+            spy: { price: spyPrice, sma50: spyMa50, sma150: spyMa150, sma200: spyMa200, change1d: spyChange1d },
+            qqq: { price: Math.round(qqqPrice * 100) / 100, sma50: Math.round(qqqMa50 * 100) / 100, sma150: Math.round(qqqMa150 * 100) / 100, sma200: Math.round(qqqMa200 * 100) / 100, change1d: qqqChange1d },
+            updatedAt: new Date().toISOString(),
+        };
+        cache.set(cKey, result, 300);
+        res.json(result);
+    } catch (e) {
+        console.error("/api/mscore:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ─── Triggers: 진입 트리거 감지 ───────────────────────────────
+app.get("/api/triggers", async (req, res) => {
+    try {
+        const cKey = "triggers_v1";
+        const cached = cache.get(cKey);
+        if (cached) return res.json(cached);
+
+        const tickers = scrGetTickers("nasdaq100", "");
+        const breakout52w = [], vcpComplete = [], rsMakingHighArr = [], pocketPivotArr = [];
+
+        for (const ticker of tickers) {
+            const row = screenerCache.get(`scr4_${ticker}`);
+            if (!row) continue;
+            const { price, vcpScore, vcp, nearBreakout, rsMakingHigh, pocketPivot, stage2, rs12m, rsVsSpy, tpr } = row;
+
+            if (nearBreakout)
+                breakout52w.push({ ticker, price: price || 0, rs12m: rs12m || 0, tpr: tpr || "D" });
+            if ((vcp || vcpScore >= 60) && nearBreakout)
+                vcpComplete.push({ ticker, price: price || 0, vcpScore: vcpScore || 0, nearBreakout, rs12m: rs12m || 0 });
+            if (rsMakingHigh && stage2)
+                rsMakingHighArr.push({ ticker, price: price || 0, rs12m: rs12m || 0, rsVsSpy: rsVsSpy || 50, stage2 });
+            if (pocketPivot && stage2)
+                pocketPivotArr.push({ ticker, price: price || 0, stage2, rs12m: rs12m || 0 });
+        }
+
+        const cachedCount = tickers.filter(t => screenerCache.get(`scr4_${t}`)).length;
+        const result = {
+            breakout52w,
+            vcpComplete,
+            rsMakingHigh: rsMakingHighArr,
+            pocketPivot: pocketPivotArr,
+            updatedAt: new Date().toISOString(),
+            totalCount: breakout52w.length + vcpComplete.length + rsMakingHighArr.length + pocketPivotArr.length,
+            cacheStats: { cached: cachedCount, total: tickers.length },
+        };
+        cache.set(cKey, result, 300);
+        res.json(result);
+    } catch (e) {
+        console.error("/api/triggers:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // ─── 전체 티커 (프런트와 동기화) ─────────────────────────────
 const ALL_TICKERS = [
     "QQQE", "MGK", "QQQ", "IBIT", "RSP", "MDY", "IWM", "TLT", "SPY", "DIA",

@@ -1199,7 +1199,7 @@ export default function Dashboard() {
   }, [selected]);
 
   const btnStyle = (active, color = C.green) => ({
-    padding: "5px 12px", fontSize: 11, fontWeight: 600,
+    padding: "7px 18px", fontSize: 16, fontWeight: 600,
     border: `1px solid ${active ? color : C.border}`, borderRadius: 4,
     background: active ? `${color}18` : "transparent",
     color: active ? color : C.textDim, cursor: "pointer",

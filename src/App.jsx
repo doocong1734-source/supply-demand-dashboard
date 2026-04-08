@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useMarketData } from "./hooks/useMarketData.js";
 import { useFavorites } from "./hooks/useFavorites.js";
+import UnifiedTable from "./components/UnifiedTable.jsx";
 
 // Design System - US.MARKET Terminal (Stitch 2026-04)
 const C = {
@@ -1615,94 +1616,18 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ── 메인 테이블 뷰 ── */}
-          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && data && Object.entries(data).map(([group, rows]) => {
-            const isCollapsed = collapsed[group];
-            const filteredRows = filterRows(rows);
-            const sortedRows = getSortedRows(group, filteredRows);
-            const range = ranges[group] || {};
-
-            return (
-              <div key={group}>
-                <div onClick={() => setCollapsed(p => ({ ...p, [group]: !p[group] }))} style={{ padding: "6px 10px", backgroundColor: C.surface, fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 3, cursor: "pointer", borderBottom: `1px solid ${C.border}`, color: C.text }}>
-                  <span>{isCollapsed ? "▶" : "▼"} {group} <span style={{ fontSize: 11, color: C.textDim, fontWeight: 400 }}>({sortedRows.length})</span></span>
-                  {group === "Industries" && (
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {Object.entries(SECTOR_COLORS).slice(0, 8).map(([sec, col]) => (
-                        <span key={sec} style={{ padding: "1px 5px", borderRadius: 6, fontSize: 9, color: "#fff", backgroundColor: col }}>{sec.slice(0, 4)}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {!isCollapsed && (
-                  <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-                    <thead style={{ position: "sticky", top: 35, zIndex: 2 }}>
-                      <tr>
-                        <th style={{ ...thStyle, width: 75 }} onClick={() => handleSort(group, "ticker")}>Ticker{getSortIndicator(group, "ticker")}</th>
-                        <th style={{ ...thStyle, width: 36 }} onClick={() => handleSort(group, "abc")}>Grd{getSortIndicator(group, "abc")}</th>
-                        {viewMode !== "flow" && <>
-                          <th style={{ ...thStyle, width: 72 }} onClick={() => handleSort(group, "daily")}>Daily{getSortIndicator(group, "daily")}</th>
-                          <th style={{ ...thStyle, width: 72 }} onClick={() => handleSort(group, "intra")}>Intra{getSortIndicator(group, "intra")}</th>
-                          <th style={{ ...thStyle, width: 72 }} onClick={() => handleSort(group, "5d")}>5D{getSortIndicator(group, "5d")}</th>
-                          <th style={{ ...thStyle, width: 72 }} onClick={() => handleSort(group, "20d")}>20D{getSortIndicator(group, "20d")}</th>
-                        </>}
-                        {viewMode !== "flow" && <th style={{ ...thStyle, width: 45 }} onClick={() => handleSort(group, "distSma50Atr")}>ATRx{getSortIndicator(group, "distSma50Atr")}</th>}
-                        {viewMode !== "flow" && <th style={{ ...thStyle, width: 42 }} onClick={() => handleSort(group, "rs")}>VARS{getSortIndicator(group, "rs")}</th>}
-                        {viewMode !== "flow" && <th style={{ ...thStyle, width: 70 }}>Chart</th>}
-                        {viewMode !== "original" && <th style={{ ...thStyle, width: 62 }} onClick={() => handleSort(group, "score")}>수급{getSortIndicator(group, "score")}</th>}
-                        {viewMode !== "original" && <th style={{ ...thStyle, width: 62 }}>시그널</th>}
-                        {viewMode !== "original" && <th style={{ ...thStyle, width: 50 }}>단계</th>}
-                        {viewMode !== "flow" && <th style={{ ...thStyle, width: 85 }}>LETF</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedRows.map((row, i) => {
-                        const isActive = selected?.ticker === row.ticker && selected?.group === row.group;
-                        const sectorColor = SECTOR_COLORS[row.sector] || "#666";
-                        return (
-                          <tr key={`${row.group}-${row.ticker}`} ref={el => rowRefs.current[`${row.group}-${row.ticker}`] = el} onClick={() => handleSelectRow(row)} onContextMenu={e => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, ticker: row.ticker }); }} style={{ cursor: "pointer", transition: "background 0.15s", backgroundColor: isActive ? C.surfaceHigh : i % 2 === 0 ? C.bg : "transparent" }}>
-                            <td style={tdStyle}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                <button
-                                  onClick={e => { e.stopPropagation(); toggleFavorite(row.ticker); }}
-                                  title={isFavorite(row.ticker) ? "현재 목록에서 해제" : "현재 목록에 추가 (우클릭으로 목록 선택)"}
-                                  style={{ background: "none", border: "none", cursor: "pointer", color: isInAnyList(row.ticker) ? C.yellow : "#444", fontSize: 12, padding: 0, lineHeight: 1, flexShrink: 0 }}
-                                >★</button>
-                                <span style={{ display: "inline-block", padding: "2px 6px", borderRadius: 12, backgroundColor: group === "Industries" ? sectorColor : C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{row.ticker}</span>
-                              </div>
-                            </td>
-                            <td style={tdStyle}><ABCBadge grade={row.abc} /></td>
-                            {viewMode !== "flow" && <>
-                              <ValueBar value={row.daily} min={range.daily?.[0]} max={range.daily?.[1]} />
-                              <ValueBar value={row.intra} min={range.intra?.[0]} max={range.intra?.[1]} />
-                              <ValueBar value={row["5d"]} min={range["5d"]?.[0]} max={range["5d"]?.[1]} />
-                              <ValueBar value={row["20d"]} min={range["20d"]?.[0]} max={range["20d"]?.[1]} />
-                            </>}
-                            {viewMode !== "flow" && <td style={{ ...tdStyle, fontSize: 11, fontWeight: 600 }}>{row.distSma50Atr?.toFixed(2)}</td>}
-                            {viewMode !== "flow" && <td style={{ ...tdStyle, fontSize: 11, fontWeight: 600 }}>{row.rs}%</td>}
-                            {viewMode !== "flow" && <td style={tdStyle}><VARSChart data={row.varsChart} /></td>}
-                            {viewMode !== "original" && <td style={tdStyle}><ScoreCell score={row.score} /></td>}
-                            {viewMode !== "original" && <td style={tdStyle}><SignalBadge signal={row.signal} compact /></td>}
-                            {viewMode !== "original" && <td style={{ ...tdStyle, fontSize: 10, color: row.phase.includes("매집") ? C.green : row.phase.includes("분산") || row.phase === "투매" ? C.red : C.textDim, fontWeight: 600 }}>{row.phase}</td>}
-                            {viewMode !== "flow" && (
-                              <td style={{ ...tdStyle, fontSize: 10, whiteSpace: "nowrap" }}>
-                                {row.longETF?.map(e => <span key={e} style={{ color: C.greenBright, cursor: "pointer", textDecoration: "underline", marginRight: 3 }}>{e}</span>)}
-                                {row.shortETF?.map(e => <span key={e} style={{ color: C.redBright, cursor: "pointer", textDecoration: "underline", marginRight: 3 }}>{e}</span>)}
-                                {!row.longETF?.length && !row.shortETF?.length && <span style={{ color: "#555" }}>-</span>}
-                              </td>
-                            )}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            );
-          })}
+          {/* ── 메인 테이블 뷰 (Stitch Design) ── */}
+          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && data && (
+            <UnifiedTable C={C} data={data} viewMode={viewMode} collapsed={collapsed} setCollapsed={setCollapsed}
+              sortStates={sortStates} handleSort={handleSort} getSortIndicator={getSortIndicator}
+              filterRows={filterRows} getSortedRows={getSortedRows} selected={selected} handleSelectRow={handleSelectRow}
+              toggleFavorite={toggleFavorite} isInAnyList={isInAnyList} isFavorite={isFavorite}
+              setContextMenu={setContextMenu} rowRefs={rowRefs} ranges={ranges} SECTOR_COLORS={SECTOR_COLORS}
+              VARSChart={VARSChart} ValueBar={ValueBar} ABCBadge={ABCBadge} ScoreCell={ScoreCell} SignalBadge={SignalBadge} />
+          )}
           {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && (
-            <div style={{ fontSize: 11, color: C.textDim, padding: 8, background: C.surface, position: "sticky", bottom: 0, borderTop: `1px solid ${C.border}` }}>
-              ↑ ↓ 방향키로 이동 · 실시간 데이터: Yahoo Finance API · 5분 캐시
+            <div style={{ fontSize: 10, color: C.textDim, padding: "8px 16px", background: C.surfaceAlt, position: "sticky", bottom: 0, borderTop: `1px solid ${C.outlineVar}`, fontFamily: "'Inter', sans-serif", letterSpacing: "0.05em" }}>
+              ↑ ↓ Navigate · Real-time Data: Yahoo Finance API · 5min Cache
             </div>
           )}
         </div>

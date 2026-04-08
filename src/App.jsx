@@ -1164,6 +1164,16 @@ export default function Dashboard() {
   const { lists, activeIdx, favorites, totalCount, setActiveIdx, addList, removeList, renameList, toggleFavorite, addToList, removeFromList, isFavorite, isInAnyList } = useFavorites();
   const [selected, setSelected] = useState(null);
   const [detailFullscreen, setDetailFullscreen] = useState(false);
+
+  // ESC key closes fullscreen chart
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape" && detailFullscreen) setDetailFullscreen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [detailFullscreen]);
+
+  // Close fullscreen when switching pages
+  useEffect(() => { setDetailFullscreen(false); }, [viewMode]);
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [collapsed, setCollapsed] = useState({});
@@ -1617,7 +1627,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: detailFullscreen ? "100%" : 480, flex: detailFullscreen ? 1 : undefined, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${C.outlineVar}`, background: C.surfaceAlt, minHeight: 0, overflow: "hidden", position: detailFullscreen ? "absolute" : "relative", top: detailFullscreen ? 0 : undefined, left: detailFullscreen ? 0 : undefined, right: detailFullscreen ? 0 : undefined, bottom: detailFullscreen ? 0 : undefined, zIndex: detailFullscreen ? 100 : undefined }}>
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: detailFullscreen ? undefined : 480, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${C.outlineVar}`, background: C.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
           <>
             {/* Header with close + fullscreen */}
             <div style={{ padding: "12px 16px", background: C.surface, borderBottom: `1px solid ${C.outlineVar}`, flexShrink: 0 }}>
@@ -1652,8 +1662,9 @@ export default function Dashboard() {
             </div>
 
             {/* Indicators - single horizontal row below chart */}
-            <div style={{ display: "flex", gap: 2, padding: "4px 6px", background: C.surface, borderTop: `1px solid ${C.outlineVar}`, flexShrink: 0, overflowX: "auto" }}>
-              {selectedIndicators && [
+            {selectedIndicators && (
+            <div style={{ display: "flex", gap: 3, padding: "6px 8px", background: C.surface, borderTop: `1px solid ${C.outlineVar}`, flexShrink: 0, overflowX: "auto", flexWrap: "wrap" }}>
+              {[
                 { label: "RSI", value: selectedIndicators.rsi?.toFixed(0) ?? "-", color: (selectedIndicators.rsi ?? 50) > 70 ? C.secondary : (selectedIndicators.rsi ?? 50) < 30 ? C.primary : C.tertiary },
                 { label: "MFI", value: selectedIndicators.mfi?.toFixed(0) ?? "-", color: C.text },
                 { label: "OBV", value: (selectedIndicators.obv ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.obv ?? 0) > 0 ? C.primary : C.secondary },
@@ -1664,14 +1675,14 @@ export default function Dashboard() {
                 { label: "GRD", value: selected.abc || "-", color: { A: C.primary, B: C.tertiary, C: C.secondary }[selected.abc] || C.textDim },
                 { label: "FLOW", value: selected.score > 0 ? `+${selected.score}` : `${selected.score}`, color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
               ].map(({ label, value, color }, i) => (
-                <div key={i} style={{ padding: "2px 5px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 2, textAlign: "center", minWidth: 32, flexShrink: 0 }}>
-                  <div style={{ fontSize: 7, color: C.textDim, fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
-                  <div style={{ fontSize: 9, fontWeight: 900, color }}>{value}</div>
+                <div key={i} style={{ padding: "4px 8px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 3, textAlign: "center", minWidth: 40, flexShrink: 0 }}>
+                  <div style={{ fontSize: 10, color: C.textDim, fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color }}>{value}</div>
                 </div>
               ))}
             </div>
+            )}
           </>
-        )}
       </div>}
     </div>
 

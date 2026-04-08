@@ -84,6 +84,32 @@ function VARSChart({ data, width = 80, height = 24 }) {
 const thStyle = { textAlign: "left", padding: "6px 6px", backgroundColor: C.surface, cursor: "pointer", userSelect: "none", fontWeight: 700, borderBottom: `1px solid ${C.border}`, color: C.text, fontSize: 11, whiteSpace: "nowrap" };
 const tdStyle = { padding: "5px 6px", borderBottom: `1px solid ${C.borderLight}`, verticalAlign: "middle", color: C.text, fontSize: 12 };
 
+// Sticky column styles for ★ and Ticker
+const stickyStarTh = { position: "sticky", left: 0, zIndex: 3, backgroundColor: C.surface };
+const stickyTickerTh = { position: "sticky", left: 24, zIndex: 3, backgroundColor: C.surface, borderRight: `2px solid ${C.border}` };
+const stickyStarTd = (bg) => ({ position: "sticky", left: 0, zIndex: 1, backgroundColor: bg });
+const stickyTickerTd = (bg) => ({ position: "sticky", left: 24, zIndex: 1, backgroundColor: bg, borderRight: `2px solid ${C.border}` });
+
+// Metric tooltips
+const METRIC_TOOLTIPS = {
+  ticker: "종목 코드",
+  price: "현재가",
+  tpr: "추세 강도 등급 (Trend Power Ranking) - A+/A/B/C/D",
+  rpr: "상대 성과 순위 (Relative Performance Ranking) 0-100",
+  rsVsSpy: "S&P500(SPY) 대비 상대강도",
+  rs12m: "12개월 상대강도 변화율 (%)",
+  vcpScore: "변동성 수축 패턴 점수 (Volatility Contraction Pattern) 0-100",
+  passCount: "12개 스크리닝 기준 중 통과한 수",
+  epsThisY: "올해 EPS 예상 성장률 (%)",
+  salesQQ: "분기 매출 성장률 (전분기 대비 %)",
+  instTrans: "기관 보유 비율 변화 (%, +매수/-매도)",
+  pe: "주가수익비율 (Price/Earnings, 낮을수록 저평가)",
+  fpe: "미래 기준 주가수익비율 (Forward P/E)",
+  epsNextY: "내년 EPS 예상 성장률 (%)",
+  eps5Y: "5년 EPS 연평균 성장률 (%)",
+  roe: "자기자본이익률 (Return on Equity, %)",
+};
+
 // TradingView 임베드 위젯
 function TradingViewChart({ ticker }) {
   const containerRef = useRef(null);
@@ -587,8 +613,13 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
   const [sortKey, setSortKey] = useState("passCount");
   const [sortDir, setSortDir] = useState("desc");
   const [chartTicker, setChartTicker] = useState(null);
+  const [showChart, setShowChart] = useState(true);
   const [spyModel, setSpyModel] = useState(null);
   const [mscore, setMscore] = useState(null);
+  // 자동 갱신
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(5);
+  const [lastRunTime, setLastRunTime] = useState(null);
   useEffect(() => {
     fetch("/api/mscore").then(r => r.json()).then(d => {
       setMscore(d);
@@ -658,7 +689,15 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
       if (notifyEnabled) { const d = JSON.parse(e.data); new Notification("스크리닝 완료", { body: `${d.passing}개 통과 / ${d.total}개 분석`, icon: "/vite.svg" }); }
     });
     es.onerror = () => { setRunning(false); es.close(); };
+    setLastRunTime(new Date());
   }
+
+  // 자동 갱신
+  useEffect(() => {
+    if (!autoRefresh || running) return;
+    const id = setInterval(() => { handleRun(); }, refreshInterval * 60 * 1000);
+    return () => clearInterval(id);
+  }, [autoRefresh, refreshInterval, running, universe, minPrice, maxPrice, limit, customInput]);
 
   // ① 필터 로직 (AND/OR/그룹AND) + ③ 수치 필터 + ② passCount
   const filtered = useMemo(() => {
@@ -755,7 +794,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
 
   return (
     <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRight: chartTicker ? `1px solid ${C.border}` : "none" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRight: chartTicker && showChart ? `1px solid ${C.border}` : "none" }}>
         {/* ── Controls ── */}
         <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
 
@@ -807,6 +846,31 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             </button>
             <span style={{ fontSize: 14, color: C.textDim, minWidth: 52 }}>{filtered.length}/{results.length}개</span>
             {spyModel && <SpyBadge model={spyModel} />}
+
+            {/* 자동 갱신 */}
+            <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 4 }}>
+              {lastRunTime && <span style={{ fontSize: 9, color: C.textDim }}>{lastRunTime.toLocaleTimeString()} 갱신</span>}
+              <label style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: autoRefresh ? C.green : C.textDim, cursor: "pointer" }}>
+                <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} style={{ width: 12, height: 12 }} />
+                자동
+              </label>
+              {autoRefresh && (
+                <select value={refreshInterval} onChange={e => setRefreshInterval(Number(e.target.value))}
+                  style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: "1px 3px", fontSize: 9 }}>
+                  <option value={1}>1분</option>
+                  <option value={5}>5분</option>
+                  <option value={10}>10분</option>
+                </select>
+              )}
+            </div>
+
+            {/* 차트 토글 */}
+            {chartTicker && (
+              <button onClick={() => setShowChart(p => !p)}
+                style={{ padding: "5px 8px", fontSize: 15, border: `1px solid ${showChart ? C.cyan : C.border}`, borderRadius: 4, background: showChart ? `${C.cyan}15` : "transparent", color: showChart ? C.cyan : C.textDim, cursor: "pointer" }}>
+                {showChart ? "◀ 차트" : "▶ 차트"}
+              </button>
+            )}
 
             {/* ⑦ CSV */}
             {sorted.length > 0 && (
@@ -966,26 +1030,26 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: 11 }}>
             <thead style={{ position: "sticky", top: 0, zIndex: 2, background: C.surface }}>
               <tr>
-                <th style={{ ...thS, width: 24 }}>★</th>
-                <th style={{ ...thS, width: 65 }} onClick={() => toggleSort("ticker")}>Ticker</th>
-                <th style={{ ...thS, width: 58 }} onClick={() => toggleSort("price")}>Price</th>
-                <th style={{ ...thS, width: 38 }} onClick={() => toggleSort("tpr")}>TPR</th>
-                <th style={{ ...thS, width: 40 }} onClick={() => toggleSort("rpr")} title="Relative Performance Ranking">RPR</th>
-                <th style={{ ...thS, width: 52 }} onClick={() => toggleSort("rsVsSpy")} title="RS vs SPY">RS/SPY</th>
-                <th style={{ ...thS, width: 52 }} onClick={() => toggleSort("rs12m")}>RS12m%</th>
-                <th style={{ ...thS, width: 48 }} onClick={() => toggleSort("vcpScore")}>VCP점수</th>
+                <th style={{ ...thS, width: 24, ...stickyStarTh }}>★</th>
+                <th style={{ ...thS, width: 65, ...stickyTickerTh }} onClick={() => toggleSort("ticker")} title={METRIC_TOOLTIPS.ticker}>Ticker</th>
+                <th style={{ ...thS, width: 58 }} onClick={() => toggleSort("price")} title={METRIC_TOOLTIPS.price}>Price</th>
+                <th style={{ ...thS, width: 38, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("tpr")} title={METRIC_TOOLTIPS.tpr}>TPR</th>
+                <th style={{ ...thS, width: 40, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("rpr")} title={METRIC_TOOLTIPS.rpr}>RPR</th>
+                <th style={{ ...thS, width: 52, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("rsVsSpy")} title={METRIC_TOOLTIPS.rsVsSpy}>RS/SPY</th>
+                <th style={{ ...thS, width: 52, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("rs12m")} title={METRIC_TOOLTIPS.rs12m}>RS12m%</th>
+                <th style={{ ...thS, width: 48, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("vcpScore")} title={METRIC_TOOLTIPS.vcpScore}>VCP점수</th>
                 {/* ② 종합 패스 수 */}
-                <th style={{ ...thS, width: 38, color: C.cyan }} onClick={() => toggleSort("passCount")} title="통과 신호 수 (12개 중)">
+                <th style={{ ...thS, width: 38, color: C.cyan, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("passCount")} title={METRIC_TOOLTIPS.passCount}>
                   패스{sortKey === "passCount" ? (sortDir === "desc" ? "▼" : "▲") : ""}
                 </th>
-                <th style={{ ...thS, width: 50 }} onClick={() => toggleSort("epsThisY")}>EPS올해</th>
-                <th style={{ ...thS, width: 48 }} onClick={() => toggleSort("salesQQ")}>매출Q</th>
-                <th style={{ ...thS, width: 46 }} onClick={() => toggleSort("instTrans")}>기관↑↓</th>
-                <th style={{ ...thS, width: 40 }} onClick={() => toggleSort("pe")}>P/E</th>
-                <th style={{ ...thS, width: 40 }} onClick={() => toggleSort("fpe")}>F/PE</th>
-                <th style={{ ...thS, width: 50 }} onClick={() => toggleSort("epsNextY")}>EPS(1Y)</th>
-                <th style={{ ...thS, width: 50 }} onClick={() => toggleSort("eps5Y")}>EPS(5Y)</th>
-                <th style={{ ...thS, width: 40 }} onClick={() => toggleSort("roe")}>ROE</th>
+                <th style={{ ...thS, width: 50, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("epsThisY")} title={METRIC_TOOLTIPS.epsThisY}>EPS올해</th>
+                <th style={{ ...thS, width: 48, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("salesQQ")} title={METRIC_TOOLTIPS.salesQQ}>매출Q</th>
+                <th style={{ ...thS, width: 46, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("instTrans")} title={METRIC_TOOLTIPS.instTrans}>기관↑↓</th>
+                <th style={{ ...thS, width: 40, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("pe")} title={METRIC_TOOLTIPS.pe}>P/E</th>
+                <th style={{ ...thS, width: 40, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("fpe")} title={METRIC_TOOLTIPS.fpe}>F/PE</th>
+                <th style={{ ...thS, width: 50, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("epsNextY")} title={METRIC_TOOLTIPS.epsNextY}>EPS(1Y)</th>
+                <th style={{ ...thS, width: 50, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("eps5Y")} title={METRIC_TOOLTIPS.eps5Y}>EPS(5Y)</th>
+                <th style={{ ...thS, width: 40, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("roe")} title={METRIC_TOOLTIPS.roe}>ROE</th>
                 {Object.entries(SCREEN_LABELS).map(([k, label]) => (
                   <th key={k} style={{ ...thS, width: 28, fontSize: 9, textAlign: "center", padding: "4px 2px" }} title={label}>
                     {label.length <= 4 ? label : label.split(/[ &\/]/)[0].slice(0, 4)}
@@ -997,13 +1061,15 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
               {sorted.map((row, i) => (
                 <tr key={row.ticker} onClick={() => setChartTicker(t => t === row.ticker ? null : row.ticker)}
                   style={{ cursor: "pointer", background: chartTicker === row.ticker ? "#374151" : i % 2 === 0 ? C.bg : "transparent" }}>
-                  <td style={{ ...tdStyle, textAlign: "center", padding: "2px 2px" }}>
+                  {(() => { const rowBg = chartTicker === row.ticker ? "#374151" : i % 2 === 0 ? C.bg : C.bg; return (<>
+                  <td style={{ ...tdStyle, textAlign: "center", padding: "2px 2px", ...stickyStarTd(rowBg) }}>
                     <button onClick={e => { e.stopPropagation(); toggleFavorite(row.ticker); }}
                       style={{ background: "none", border: "none", cursor: "pointer", color: isInAnyList(row.ticker) ? C.yellow : "#444", fontSize: 13, padding: 0, lineHeight: 1 }}>★</button>
                   </td>
-                  <td style={tdStyle}>
+                  <td style={{ ...tdStyle, ...stickyTickerTd(rowBg) }}>
                     <span style={{ padding: "1px 5px", borderRadius: 10, background: "#4a5568", color: "#fff", fontWeight: 700, fontSize: 11 }}>{row.ticker}</span>
                   </td>
+                  </>); })()}
                   <td style={{ ...tdStyle, fontWeight: 600 }}>${row.price?.toFixed(2)}</td>
                   <td style={tdStyle}>
                     <span style={{ padding: "1px 5px", borderRadius: 4, background: `${TPR_COLOR[row.tpr] ?? "#666"}33`, color: TPR_COLOR[row.tpr] ?? C.textDim, fontWeight: 700, fontSize: 10 }}>{row.tpr}</span>
@@ -1070,11 +1136,14 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
       </div>
 
       {/* ── Right: TradingView chart ── */}
-      {chartTicker && (
+      {chartTicker && showChart && (
         <div style={{ width: 1040, flexShrink: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontWeight: 700, fontSize: 14 }}>{chartTicker}</span>
-            <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => setShowChart(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14 }} title="차트 접기">◀</button>
+              <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
+            </div>
           </div>
           <TradingViewChart ticker={chartTicker} />
         </div>

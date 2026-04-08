@@ -41,7 +41,7 @@ function ValueBar({ value, min, max }) {
 }
 
 function ABCBadge({ grade }) {
-  const colors = { A: C.primary, B: C.tertiary, C: C.secondary };
+  const colors = { "A": C.primary, "B": C.tertiary, "C": C.secondary };
   if (!grade) return <span style={{ color: C.textDim }}>-</span>;
   const c = colors[grade] || C.textDim;
   return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", border: `2px solid ${c}`, fontWeight: 800, fontSize: 10, color: c, background: `${c}15`, letterSpacing: "0.05em" }}>{grade}</span>;
@@ -1672,7 +1672,7 @@ export default function Dashboard() {
                 { label: "MACD", value: (selectedIndicators.macdHist ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.macdHist ?? 0) > 0 ? C.primary : C.secondary },
                 { label: "BB", value: `${selectedIndicators.bbPos ?? 50}%`, color: C.tertiary },
                 { label: "SMA", value: `${(selectedIndicators.sma200Dev ?? 0).toFixed(0)}%`, color: (selectedIndicators.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "GRD", value: selected.abc || "-", color: { A: C.primary, B: C.tertiary, C: C.secondary }[selected.abc] || C.textDim },
+                { label: "GRD", value: selected.abc || "-", color: { "A": C.primary, "B": C.tertiary, "C": C.secondary }[selected.abc] || C.textDim },
                 { label: "FLOW", value: selected.score > 0 ? `+${selected.score}` : `${selected.score}`, color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
               ].map(({ label, value, color }, i) => (
                 <div key={i} style={{ padding: "4px 8px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 3, textAlign: "center", minWidth: 40, flexShrink: 0 }}>

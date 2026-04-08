@@ -1395,7 +1395,7 @@ export default function Dashboard() {
               ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"],
             ].map(([id, label]) => (
               <button key={id} onClick={() => setViewMode(id)}
-                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 13, height: 52, padding: "0 14px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${C.primary}` : "2px solid transparent", color: viewMode === id ? C.primary : C.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
+                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 17, height: 52, padding: "0 16px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${C.primary}` : "2px solid transparent", color: viewMode === id ? C.primary : C.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
                 {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: C.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
               </button>
             ))}
@@ -1414,26 +1414,8 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* ═══ SIDE NAV BAR ═══ */}
-      <aside style={{ position: "fixed", left: 0, top: 52, bottom: 0, width: 64, background: C.sidebarBg, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16, zIndex: 999 }}>
-        {[
-          ["filter_list", "Filters"], ["notifications_active", "Alerts"], ["account_balance_wallet", "Portfolio"], ["query_stats", "Analytics"], ["terminal", "Terminal"],
-        ].map(([icon, label]) => (
-          <div key={label} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "12px 0", color: C.textDim, cursor: "pointer", transition: "all 0.2s" }}
-            onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHigh; e.currentTarget.style.color = C.text; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 20, marginBottom: 4 }}>{icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</span>
-          </div>
-        ))}
-        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 20, color: C.textDim, cursor: "pointer" }}>help</span>
-          <span className="material-symbols-outlined" style={{ fontSize: 20, color: C.textDim, cursor: "pointer" }}>settings</span>
-        </div>
-      </aside>
-
-      {/* ═══ MAIN CONTENT ═══ */}
-    <div style={{ marginLeft: 64, paddingTop: 52, display: "flex", height: "100vh", overflow: "hidden" }}>
+      {/* ═══ MAIN CONTENT (no sidebar - removed per user feedback) ═══ */}
+    <div style={{ paddingTop: 52, display: "flex", height: "100vh", overflow: "hidden" }}>
       {loading && data && (
         <div style={{ position: "fixed", top: 8, right: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px", fontSize: 11, color: C.textDim, zIndex: 50 }}>
           🔄 갱신 중...
@@ -1634,70 +1616,64 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 12, minHeight: 0, overflow: "auto" }}>
-        {!selected ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: C.textDim, fontSize: 14 }}>
-            종목을 선택하면 수급 상세 분석이 표시됩니다
-          </div>
-        ) : (
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: 420, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: `1px solid ${C.outlineVar}`, background: C.surfaceAlt, minHeight: 0, overflow: "auto" }}>
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ fontSize: 22, fontWeight: 800 }}>{selected.ticker}</div>
-                  <button
-                    onClick={() => toggleFavorite(selected.ticker)}
-                    title={isFavorite(selected.ticker) ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-                    style={{
-                      background: isFavorite(selected.ticker) ? "#f59e0b22" : "transparent",
-                      border: `1px solid ${isFavorite(selected.ticker) ? C.yellow : C.border}`,
-                      borderRadius: 6, cursor: "pointer",
-                      color: isFavorite(selected.ticker) ? C.yellow : C.textDim,
-                      fontSize: 14, padding: "3px 8px", fontWeight: 700,
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {isFavorite(selected.ticker) ? "★ 즐겨찾기됨" : "☆ 즐겨찾기"}
-                  </button>
+            {/* Header with close + fullscreen */}
+            <div style={{ padding: "12px 16px", background: C.surface, borderBottom: `1px solid ${C.outlineVar}`, flexShrink: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: C.textBright, letterSpacing: "-0.02em" }}>{selected.ticker}</div>
+                    <span className="material-symbols-outlined"
+                      onClick={() => toggleFavorite(selected.ticker)}
+                      style={{ fontSize: 20, color: isFavorite(selected.ticker) ? "#f59e0b" : C.outline, cursor: "pointer", fontVariationSettings: isFavorite(selected.ticker) ? "'FILL' 1" : "'FILL' 0" }}>star</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>
+                    {selected.sector}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: C.textDim }}>
-                  {selected.group} · {selected.sector}
-                  {selected.price > 0 && <span style={{ marginLeft: 8, color: C.textBright, fontWeight: 700 }}>${selected.price.toFixed(2)}</span>}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <span className="material-symbols-outlined" onClick={() => { /* TODO: fullscreen */ }} style={{ fontSize: 18, color: C.textDim, cursor: "pointer" }} title="전체보기">fullscreen</span>
+                    <span className="material-symbols-outlined" onClick={() => setSelected(null)} style={{ fontSize: 18, color: C.textDim, cursor: "pointer" }} title="닫기">close</span>
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: C.primary, fontFamily: "monospace" }}>${selected.price?.toFixed(2)}</div>
+                  <div style={{ fontSize: 10, color: selected.daily >= 0 ? C.primary : C.secondary, fontWeight: 700 }}>
+                    {selected.daily >= 0 ? "+" : ""}{selected.daily?.toFixed(2)}%
+                  </div>
                 </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <SignalBadge signal={selected.signal} />
-                <div style={{ fontSize: 10, color: C.textDim, marginTop: 4 }}>{selected.phase} · Score {selected.score > 0 ? "+" : ""}{selected.score}</div>
               </div>
             </div>
 
             {/* TradingView 차트 */}
             <TradingViewChart ticker={selected.ticker} />
 
-            {/* Quick Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 12 }}>
+            {/* Quick Stats - compact 4x3 grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, marginBottom: 10, padding: "0 12px" }}>
               {[
-                { label: "Grade", value: selected.abc, color: { A: C.blue, B: C.green, C: C.yellow }[selected.abc] },
-                { label: "Daily", value: `${selected.daily > 0 ? "+" : ""}${selected.daily}%`, color: selected.daily >= 0 ? C.green : C.red },
-                { label: "5D", value: `${selected["5d"] > 0 ? "+" : ""}${selected["5d"]}%`, color: selected["5d"] >= 0 ? C.green : C.red },
-                { label: "20D", value: `${selected["20d"] > 0 ? "+" : ""}${selected["20d"]}%`, color: selected["20d"] >= 0 ? C.green : C.red },
-                { label: "ATRx", value: selected.distSma50Atr?.toFixed(2), color: C.text },
-                { label: "VARS", value: `${selected.rs}%`, color: selected.rs >= 50 ? C.green : C.red },
-              ].map(({ label, value, color }, i) => (
-                <div key={i} style={{ padding: 8, background: C.surfaceAlt, borderRadius: 6, border: `1px solid ${C.borderLight}` }}>
-                  <div style={{ fontSize: 9, color: C.textDim, marginBottom: 2 }}>{label}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color }}>{value}</div>
+                { label: "RSI", value: selectedIndicators?.rsi?.toFixed(0) ?? "-", color: (selectedIndicators?.rsi ?? 50) > 70 ? C.secondary : (selectedIndicators?.rsi ?? 50) < 30 ? C.primary : C.tertiary },
+                { label: "MFI", value: selectedIndicators?.mfi?.toFixed(0) ?? "-", color: (selectedIndicators?.mfi ?? 50) > 80 ? C.secondary : (selectedIndicators?.mfi ?? 50) < 20 ? C.primary : C.text },
+                { label: "OBV", value: (selectedIndicators?.obv ?? 0) > 0 ? "north" : "south", icon: true, color: (selectedIndicators?.obv ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "VOL", value: `${((selectedIndicators?.volRatio ?? 100) / 100).toFixed(1)}x`, color: (selectedIndicators?.volRatio ?? 100) > 200 ? C.primary : C.text },
+                { label: "MACD", value: (selectedIndicators?.macdHist ?? 0) > 0 ? "trending_up" : "trending_down", icon: true, color: (selectedIndicators?.macdHist ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "BB", value: `${selectedIndicators?.bbPos ?? 50}%`, color: (selectedIndicators?.bbPos ?? 50) > 80 ? C.secondary : (selectedIndicators?.bbPos ?? 50) < 20 ? C.primary : C.tertiary },
+                { label: "SMA200", value: `${(selectedIndicators?.sma200Dev ?? 0) > 0 ? "+" : ""}${(selectedIndicators?.sma200Dev ?? 0)}%`, color: (selectedIndicators?.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "SHORT", value: selectedIndicators?.shortInt != null ? `${selectedIndicators.shortInt}%` : "N/A", color: (selectedIndicators?.shortInt ?? 0) > 15 ? C.secondary : C.text },
+                { label: "FLOW", value: selected.score > 30 ? "High" : selected.score < -30 ? "Low" : "Mid", color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
+                { label: "GRADE", value: selected.abc || "-", color: { A: C.primary, B: C.tertiary, C: C.secondary }[selected.abc] || C.textDim },
+                { label: "ATR", value: selected.distSma50Atr?.toFixed(2) ?? "-", color: C.text },
+                { label: "VARS", value: `${selected.rs ?? 50}%`, color: (selected.rs ?? 50) >= 50 ? C.primary : C.secondary },
+              ].map(({ label, value, color, icon }, i) => (
+                <div key={i} style={{ padding: "4px 2px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 2, textAlign: "center" }}>
+                  <div style={{ fontSize: 7, color: C.textDim, fontWeight: 700, marginBottom: 1, textTransform: "uppercase" }}>{label}</div>
+                  {icon ? <span className="material-symbols-outlined" style={{ fontSize: 12, color }}>{value}</span>
+                    : <div style={{ fontSize: 9, fontWeight: 900, color }}>{value}</div>}
                 </div>
               ))}
             </div>
 
-            {/* 12지표 */}
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.blueLight, marginBottom: 6, letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 8 }}>
-              수급 선행 12지표 분석
-              {detailLoading && <span style={{ fontSize: 10, color: C.textDim }}>⏳ 공매도 데이터 로딩...</span>}
-            </div>
-            {/* 9개 지표: 추세(4) + 수급(4) + 시장(1) — VWAP·A/D·주문흐름 제거 */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 12 }}>
+            {/* 12지표 - compact version shown in Quick Stats above */}
+            <div style={{ display: "none", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 12 }}>
               {selectedIndicators && [
                 { key: "sma200", name: "SMA200 이탈",      cat: "추세",     val: `${(selectedIndicators.sma200Dev ?? 0) > 0 ? "+" : ""}${selectedIndicators.sma200Dev ?? 0}%`,
                   status: (selectedIndicators.sma200Dev ?? 0) < -10 ? "하방이탈" : (selectedIndicators.sma200Dev ?? 0) > 20 ? "과열" : "중립",

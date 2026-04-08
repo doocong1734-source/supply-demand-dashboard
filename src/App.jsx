@@ -220,6 +220,62 @@ function RankColumn({ title, rows, valueKey, color, isVol }) {
   );
 }
 
+// ─── AI 코멘트 버블 (MiniMax M2.7) ───────────────────────────
+function AICommentBubble({ ticker }) {
+  const [comment, setComment] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const fetchComment = async (e) => {
+    e.stopPropagation();
+    if (loading || loaded) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/ai/comment/${ticker}`);
+      const d = await r.json();
+      setComment(d.comment || "분석 실패");
+      setLoaded(true);
+    } catch { setComment("오류 발생"); setLoaded(true); }
+    finally { setLoading(false); }
+  };
+
+  if (loaded && comment) {
+    return <div style={{ fontSize: 10, color: "#94a3b8", fontStyle: "italic", marginTop: 2, padding: "3px 6px", background: "#1e293b", borderRadius: 4, border: "1px solid #334155" }}>{comment}</div>;
+  }
+  return (
+    <button onClick={fetchComment} disabled={loading} style={{ fontSize: 9, padding: "1px 6px", background: "transparent", border: "1px solid #334155", color: "#64748b", borderRadius: 3, cursor: "pointer", marginLeft: 4, whiteSpace: "nowrap" }}>
+      {loading ? "AI..." : "AI분석"}
+    </button>
+  );
+}
+
+function MScoreAISummary() {
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const fetch = async () => {
+    if (loading || loaded) return;
+    setLoading(true);
+    try {
+      const r = await window.fetch("/api/ai/mscore-summary");
+      const d = await r.json();
+      setSummary(d.summary || "요약 실패");
+      setLoaded(true);
+    } catch { setSummary("오류 발생"); setLoaded(true); }
+    finally { setLoading(false); }
+  };
+
+  if (loaded && summary) {
+    return <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 6, background: "#0f172a", border: "1px solid #1e3a5f", fontSize: 12, color: "#93c5fd", fontStyle: "italic" }}>AI: {summary}</div>;
+  }
+  return (
+    <button onClick={fetch} disabled={loading} style={{ marginTop: 8, width: "100%", padding: "6px 0", background: "transparent", border: "1px solid #1e3a5f", color: "#64748b", borderRadius: 4, cursor: "pointer", fontSize: 11 }}>
+      {loading ? "AI 시황 분석 중..." : "AI 시황 요약"}
+    </button>
+  );
+}
+
 function MScorePanel() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -300,6 +356,7 @@ function MScorePanel() {
         <span style={{ fontSize: 12 }}>SPXA50R <b style={{ color: C.text }}>{details.breadthRaw?.spxa50r}%</b></span>
         <span style={{ fontSize: 10, color: C.textDim, marginLeft: "auto" }}>갱신: {timePart}</span>
       </div>
+      <MScoreAISummary />
     </div>
   );
 }
@@ -325,18 +382,21 @@ function TriggerPanel() {
           {icon} {title} <span style={{ color: C.textDim, fontWeight: 400 }}>({items.length})</span>
         </div>
         {items.map((item, i) => (
-          <div key={i}
-            onClick={() => setChartTicker(item.ticker)}
-            onMouseEnter={e => e.currentTarget.style.background = "#263040"}
-            onMouseLeave={e => e.currentTarget.style.background = chartTicker === item.ticker ? "#374151" : "#1e2530"}
-            style={{ padding: "7px 12px", borderTop: `1px solid ${C.borderLight}`, display: "flex", gap: 12, alignItems: "center", cursor: "pointer", background: chartTicker === item.ticker ? "#374151" : "#1e2530" }}>
-            <b style={{ color: C.yellow, fontSize: 12, minWidth: 52 }}>{item.ticker}</b>
-            {renderRow(item)}
-            <a href={`https://finviz.com/chart.ashx?t=${item.ticker}&ty=c&ta=1&p=d`} target="_blank" rel="noreferrer"
-              onClick={e => e.stopPropagation()}
-              style={{ marginLeft: "auto", fontSize: 10, color: C.textDim, textDecoration: "none", padding: "1px 6px", border: `1px solid ${C.border}`, borderRadius: 3 }}>
-              Finviz ↗
-            </a>
+          <div key={i} style={{ borderTop: `1px solid ${C.borderLight}`, background: chartTicker === item.ticker ? "#374151" : "#1e2530" }}>
+            <div
+              onClick={() => setChartTicker(item.ticker)}
+              onMouseEnter={e => e.currentTarget.style.background = "#263040"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              style={{ padding: "7px 12px", display: "flex", gap: 12, alignItems: "center", cursor: "pointer" }}>
+              <b style={{ color: C.yellow, fontSize: 12, minWidth: 52 }}>{item.ticker}</b>
+              {renderRow(item)}
+              <AICommentBubble ticker={item.ticker} />
+              <a href={`https://finviz.com/chart.ashx?t=${item.ticker}&ty=c&ta=1&p=d`} target="_blank" rel="noreferrer"
+                onClick={e => e.stopPropagation()}
+                style={{ marginLeft: "auto", fontSize: 10, color: C.textDim, textDecoration: "none", padding: "1px 6px", border: `1px solid ${C.border}`, borderRadius: 3 }}>
+                Finviz ↗
+              </a>
+            </div>
           </div>
         ))}
       </div>

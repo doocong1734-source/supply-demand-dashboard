@@ -1178,7 +1178,7 @@ app.get("/api/triggers", async (req, res) => {
             let spyCloses = null;
             try {
                 const spyModel = await scrSpyModel();
-                if (spyModel?.closes) spyCloses = spyModel.closes;
+                if (spyModel?.spyCloses?.length) spyCloses = spyModel.spyCloses;
             } catch (_) {}
 
             for (const ticker of tickers) {
@@ -1246,13 +1246,125 @@ app.get("/api/triggers", async (req, res) => {
             rsMakingHigh: rsMakingHighArr,
             pocketPivot: pocketPivotArr,
             updatedAt: new Date().toISOString(),
-            totalCount: breakout52w.length + vcpComplete.length + rsMakingHighArr.length + pocketPivotArr.length,
+            totalCount: new Set([...breakout52w, ...vcpComplete, ...rsMakingHighArr, ...pocketPivotArr].map(i => i.ticker)).size,
             cacheStats: { cached: finalCached, total: tickers.length },
         };
         cache.set(cKey, result, 300);
         res.json(result);
     } catch (e) {
         console.error("/api/triggers:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ─── MiniMax AI 코멘트 (네이티브 API) ───────────────────────────
+const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY || "sk-cp-Et6WwIwpNDLoamxFDELs67MlNEvm-P0HXQb7qY6SJ2vRbtpADesfrW9SfRnkJmBpPJ90-8s1KYenXq_OkFejcSp0KNuxy4KBJOwwdrTts-Fr3hS1xRHBJQU";
+const MINIMAX_NATIVE = "https://api.minimax.io/v1/text/chatcompletion_v2";
+
+async function callMiniMax(instruction, userPrompt, maxTokens = 500) {
+    const res = await axios.post(
+        MINIMAX_NATIVE,
+        {
+            model: "MiniMax-M2.7",
+            max_tokens: maxTokens,
+            messages: [
+                { role: "system", content: "반드시 한국어로만 답변하세요. 한자(중국어 간체/번체) 절대 사용 금지. " + instruction },
+                { role: "user", content: userPrompt },
+            ],
+        },
+        {
+            headers: {
+                "Authorization": `Bearer ${MINIMAX_API_KEY}`,
+                "content-type": "application/json",
+            },
+            timeout: 30000,
+        }
+    );
+    const text = res.data.choices?.[0]?.message?.content || "";
+    // 혹시 남아있는 CJK 한자 제거
+    return text.replace(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g, "").trim();
+}
+
+// GET /api/ai/comment/:ticker — 종목 개별 분석 (24h 캐시)
+app.get("/api/ai/comment/:ticker", async (req, res) => {
+    try {
+        const ticker = req.params.ticker.toUpperCase();
+        const cKey = `ai_comment_${ticker}`;
+        const cached = dayCache.get(cKey);
+        if (cached) return res.json(cached);
+
+        // 기존 스크리너 캐시 활용
+        let scrData = null;
+        for (const u of ["nasdaq100", "sp500", "sp100", "russell2000"]) {
+            const d = cache.get(`scr4_${u}`);
+            if (d?.results) {
+                scrData = d.results.find(r => r.ticker === ticker);
+                if (scrData) break;
+            }
+        }
+
+        // 지표 데이터 보조 fetch
+        let indData = cache.get(`ind_${ticker}`);
+
+        const context = scrData
+            ? `종목: ${ticker}, 현재가: $${scrData.price}, RS: ${scrData.rs12m}, Stage2: ${scrData.stage2}, VCP: ${scrData.vcpScore >= 3}, 포켓피봇: ${scrData.pocketPivot}, 52주고점대비: ${scrData.from52wHigh ? (scrData.from52wHigh * 100).toFixed(1) + "%" : "N/A"}, 거래량비율: ${scrData.volRatio ? scrData.volRatio.toFixed(2) : "N/A"}x`
+            : indData
+            ? `종목: ${ticker}, RSI: ${indData.rsi?.toFixed(1)}, OBV추세: ${indData.obv}, RS(20일): ${indData.rs}, 5일수익률: ${indData.fiveD}%, 20일수익률: ${indData.twentyD}%`
+            : `종목: ${ticker}`;
+
+        const instruction = "다음 종목의 기술적 분석 코멘트를 80자 이내 한국어로 작성하세요. 핵심 신호 위주로 간결하게.";
+        const comment = await callMiniMax(instruction, context, 300);
+        const result = { ticker, comment, updatedAt: new Date().toISOString() };
+        dayCache.set(cKey, result);
+        res.json(result);
+    } catch (e) {
+        console.error("/api/ai/comment:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// GET /api/ai/mscore-summary — M-Score 시황 요약 (5분 캐시)
+app.get("/api/ai/mscore-summary", async (req, res) => {
+    try {
+        const cKey = "ai_mscore_summary";
+        const cached = cache.get(cKey);
+        if (cached) return res.json(cached);
+
+        const mscore = cache.get("mscore_v1");
+        if (!mscore) return res.status(503).json({ error: "M-Score 데이터 없음. /api/mscore 먼저 호출하세요." });
+
+        const context = `M-Score: ${mscore.score}점 (${mscore.label}), SPY: $${mscore.spy?.price} (SMA200 ${mscore.spy?.sma200}), QQQ: $${mscore.qqq?.price}, 광폭지수(SPXA200R): ${mscore.details?.breadthRaw?.spxa200r?.toFixed(1)}%, MA포지션: ${mscore.details?.maPosition}점, 52주고점대비: ${mscore.details?.vs52wHigh}점`;
+
+        const instruction = "현재 시장 상황을 150자 이내 한국어로 요약하세요. 투자자에게 실용적인 한 줄 조언을 포함하세요.";
+        const summary = await callMiniMax(instruction, context, 400);
+        const result = { summary, score: mscore.score, status: mscore.status, updatedAt: new Date().toISOString() };
+        cache.set(cKey, result, 300);
+        res.json(result);
+    } catch (e) {
+        console.error("/api/ai/mscore-summary:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST /api/ai/portfolio-review — 포트폴리오 진단 (캐시 없음)
+app.post("/api/ai/portfolio-review", async (req, res) => {
+    try {
+        const { holdings, mScore } = req.body;
+        if (!holdings || !Array.isArray(holdings) || holdings.length === 0) {
+            return res.status(400).json({ error: "holdings 배열 필요" });
+        }
+
+        const holdingsSummary = holdings.map(h =>
+            `${h.ticker}: ${h.shares}주 @ $${h.avgCost} → 현재 $${h.currentPrice || "N/A"} (손익 ${h.pnlPct?.toFixed(1) || "N/A"}%, 손절 $${h.stopLoss || "미설정"})`
+        ).join("\n");
+
+        const context = `시장상태: ${mScore ? `M-Score ${mScore.score}점 (${mScore.label})` : "정보없음"}\n보유종목:\n${holdingsSummary}`;
+
+        const instruction = "포트폴리오를 진단하고 300자 이내 한국어로 리포트하세요. 종목별 1줄 코멘트 + 전체 위험도(0-100점) + 핵심 조언을 포함하세요.";
+        const review = await callMiniMax(instruction, context, 800);
+        res.json({ review, updatedAt: new Date().toISOString() });
+    } catch (e) {
+        console.error("/api/ai/portfolio-review:", e.message);
         res.status(500).json({ error: e.message });
     }
 });

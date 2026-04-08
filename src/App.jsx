@@ -1164,6 +1164,11 @@ export default function Dashboard() {
   const { lists, activeIdx, favorites, totalCount, setActiveIdx, addList, removeList, renameList, toggleFavorite, addToList, removeFromList, isFavorite, isInAnyList } = useFavorites();
   const [selected, setSelected] = useState(null);
   const [detailFullscreen, setDetailFullscreen] = useState(false);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [collapsed, setCollapsed] = useState({});
+  const [sortStates, setSortStates] = useState({});
+  const [viewMode, setViewMode] = useState("combined");
 
   // ESC key closes fullscreen chart
   useEffect(() => {
@@ -1174,11 +1179,6 @@ export default function Dashboard() {
 
   // Close fullscreen when switching pages
   useEffect(() => { setDetailFullscreen(false); }, [viewMode]);
-  const [detailData, setDetailData] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [collapsed, setCollapsed] = useState({});
-  const [sortStates, setSortStates] = useState({});
-  const [viewMode, setViewMode] = useState("combined");
   const [flowFilter, setFlowFilter] = useState("all");
   const [watchlistSearch, setWatchlistSearch] = useState("");
   const [searchResult, setSearchResult] = useState(null);

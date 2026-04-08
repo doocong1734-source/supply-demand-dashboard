@@ -133,7 +133,7 @@ function TradingViewChart({ ticker }) {
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: ticker,
+      symbol: ticker.endsWith(".KS") || ticker.endsWith(".KQ") ? `KRX:${ticker.split(".")[0]}` : ticker,
       interval: "D",
       timezone: "Asia/Seoul",
       theme: "dark",

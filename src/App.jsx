@@ -1163,6 +1163,7 @@ export default function Dashboard() {
   const { data, loading, error, lastUpdated, fetchCOT } = useMarketData();
   const { lists, activeIdx, favorites, totalCount, setActiveIdx, addList, removeList, renameList, toggleFavorite, addToList, removeFromList, isFavorite, isInAnyList } = useFavorites();
   const [selected, setSelected] = useState(null);
+  const [detailFullscreen, setDetailFullscreen] = useState(false);
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [collapsed, setCollapsed] = useState({});
@@ -1616,7 +1617,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: 420, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: `1px solid ${C.outlineVar}`, background: C.surfaceAlt, minHeight: 0, overflow: "auto" }}>
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: detailFullscreen ? "100%" : 480, flex: detailFullscreen ? 1 : undefined, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${C.outlineVar}`, background: C.surfaceAlt, minHeight: 0, overflow: "hidden", position: detailFullscreen ? "absolute" : "relative", top: detailFullscreen ? 0 : undefined, left: detailFullscreen ? 0 : undefined, right: detailFullscreen ? 0 : undefined, bottom: detailFullscreen ? 0 : undefined, zIndex: detailFullscreen ? 100 : undefined }}>
           <>
             {/* Header with close + fullscreen */}
             <div style={{ padding: "12px 16px", background: C.surface, borderBottom: `1px solid ${C.outlineVar}`, flexShrink: 0 }}>
@@ -1634,8 +1635,8 @@ export default function Dashboard() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <span className="material-symbols-outlined" onClick={() => { /* TODO: fullscreen */ }} style={{ fontSize: 18, color: C.textDim, cursor: "pointer" }} title="전체보기">fullscreen</span>
-                    <span className="material-symbols-outlined" onClick={() => setSelected(null)} style={{ fontSize: 18, color: C.textDim, cursor: "pointer" }} title="닫기">close</span>
+                    <span className="material-symbols-outlined" onClick={() => setDetailFullscreen(f => !f)} style={{ fontSize: 18, color: detailFullscreen ? C.primary : C.textDim, cursor: "pointer" }} title={detailFullscreen ? "축소" : "전체보기"}>{detailFullscreen ? "fullscreen_exit" : "fullscreen"}</span>
+                    <span className="material-symbols-outlined" onClick={() => { setSelected(null); setDetailFullscreen(false); }} style={{ fontSize: 18, color: C.textDim, cursor: "pointer" }} title="닫기">close</span>
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 900, color: C.primary, fontFamily: "monospace" }}>${selected.price?.toFixed(2)}</div>
                   <div style={{ fontSize: 10, color: selected.daily >= 0 ? C.primary : C.secondary, fontWeight: 700 }}>
@@ -1645,29 +1646,30 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* TradingView 차트 */}
-            <TradingViewChart ticker={selected.ticker} />
+            {/* TradingView 차트 - fills remaining space */}
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <TradingViewChart ticker={selected.ticker} />
+            </div>
 
-            {/* Quick Stats - compact 4x3 grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, marginBottom: 10, padding: "0 12px" }}>
+            {/* Indicators - single horizontal row */}
+            <div style={{ display: "flex", gap: 2, padding: "6px 8px", background: C.surface, borderTop: `1px solid ${C.outlineVar}`, flexShrink: 0, overflowX: "auto" }}>
               {[
                 { label: "RSI", value: selectedIndicators?.rsi?.toFixed(0) ?? "-", color: (selectedIndicators?.rsi ?? 50) > 70 ? C.secondary : (selectedIndicators?.rsi ?? 50) < 30 ? C.primary : C.tertiary },
-                { label: "MFI", value: selectedIndicators?.mfi?.toFixed(0) ?? "-", color: (selectedIndicators?.mfi ?? 50) > 80 ? C.secondary : (selectedIndicators?.mfi ?? 50) < 20 ? C.primary : C.text },
-                { label: "OBV", value: (selectedIndicators?.obv ?? 0) > 0 ? "north" : "south", icon: true, color: (selectedIndicators?.obv ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "MFI", value: selectedIndicators?.mfi?.toFixed(0) ?? "-", color: (selectedIndicators?.mfi ?? 50) > 80 ? C.secondary : C.text },
+                { label: "OBV", value: (selectedIndicators?.obv ?? 0) > 0 ? "+" : "-", color: (selectedIndicators?.obv ?? 0) > 0 ? C.primary : C.secondary },
                 { label: "VOL", value: `${((selectedIndicators?.volRatio ?? 100) / 100).toFixed(1)}x`, color: (selectedIndicators?.volRatio ?? 100) > 200 ? C.primary : C.text },
-                { label: "MACD", value: (selectedIndicators?.macdHist ?? 0) > 0 ? "trending_up" : "trending_down", icon: true, color: (selectedIndicators?.macdHist ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "BB", value: `${selectedIndicators?.bbPos ?? 50}%`, color: (selectedIndicators?.bbPos ?? 50) > 80 ? C.secondary : (selectedIndicators?.bbPos ?? 50) < 20 ? C.primary : C.tertiary },
-                { label: "SMA200", value: `${(selectedIndicators?.sma200Dev ?? 0) > 0 ? "+" : ""}${(selectedIndicators?.sma200Dev ?? 0)}%`, color: (selectedIndicators?.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "SHORT", value: selectedIndicators?.shortInt != null ? `${selectedIndicators.shortInt}%` : "N/A", color: (selectedIndicators?.shortInt ?? 0) > 15 ? C.secondary : C.text },
-                { label: "FLOW", value: selected.score > 30 ? "High" : selected.score < -30 ? "Low" : "Mid", color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
-                { label: "GRADE", value: selected.abc || "-", color: { A: C.primary, B: C.tertiary, C: C.secondary }[selected.abc] || C.textDim },
-                { label: "ATR", value: selected.distSma50Atr?.toFixed(2) ?? "-", color: C.text },
-                { label: "VARS", value: `${selected.rs ?? 50}%`, color: (selected.rs ?? 50) >= 50 ? C.primary : C.secondary },
-              ].map(({ label, value, color, icon }, i) => (
-                <div key={i} style={{ padding: "4px 2px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 2, textAlign: "center" }}>
-                  <div style={{ fontSize: 7, color: C.textDim, fontWeight: 700, marginBottom: 1, textTransform: "uppercase" }}>{label}</div>
-                  {icon ? <span className="material-symbols-outlined" style={{ fontSize: 12, color }}>{value}</span>
-                    : <div style={{ fontSize: 9, fontWeight: 900, color }}>{value}</div>}
+                { label: "MACD", value: (selectedIndicators?.macdHist ?? 0) > 0 ? "+" : "-", color: (selectedIndicators?.macdHist ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "BB", value: `${selectedIndicators?.bbPos ?? 50}%`, color: C.tertiary },
+                { label: "SMA", value: `${(selectedIndicators?.sma200Dev ?? 0).toFixed(0)}%`, color: (selectedIndicators?.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "SI", value: selectedIndicators?.shortInt != null ? `${selectedIndicators.shortInt}%` : "-", color: C.text },
+                { label: "GRD", value: selected.abc || "-", color: { A: C.primary, B: C.tertiary, C: C.secondary }[selected.abc] || C.textDim },
+                { label: "ATR", value: selected.distSma50Atr?.toFixed(1) ?? "-", color: C.text },
+                { label: "RS", value: `${selected.rs ?? 50}%`, color: (selected.rs ?? 50) >= 50 ? C.primary : C.secondary },
+                { label: "FLOW", value: selected.score > 0 ? `+${selected.score}` : `${selected.score}`, color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
+              ].map(({ label, value, color }, i) => (
+                <div key={i} style={{ padding: "3px 6px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 2, textAlign: "center", minWidth: 36, flexShrink: 0 }}>
+                  <div style={{ fontSize: 7, color: C.textDim, fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ fontSize: 9, fontWeight: 900, color }}>{value}</div>
                 </div>
               ))}
             </div>

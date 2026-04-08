@@ -837,6 +837,9 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
               <option value="sp100">S&amp;P 100</option>
               <option value="both">NASDAQ+SP100</option>
               <option value="russell2000">Russell 2000 (IWM)</option>
+              <option value="kospi200">KOSPI 200</option>
+              <option value="kosdaq150">KOSDAQ 150</option>
+              <option value="krx">KRX (KOSPI+KOSDAQ)</option>
               <option value="custom">직접 입력</option>
             </select>
             {universe === "custom" && (

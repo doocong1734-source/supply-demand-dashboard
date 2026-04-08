@@ -346,7 +346,7 @@ function MScorePanel() {
     <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
       <div style={{ padding: "14px 18px", borderRadius: 8, background: bgColor, border: `1px solid ${color}44`, marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
-          <span style={{ fontSize: 18, fontWeight: 800 }}>🎯 M-Score</span>
+          <span style={{ fontSize: 18, fontWeight: 800 }}>M-Score</span>
           <span style={{ fontSize: 36, fontWeight: 900, color, lineHeight: 1 }}>{score}</span>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800, color }}>{status}</div>
@@ -576,15 +576,15 @@ const TPR_COLOR = { "A+": "#00c853", A: "#69f0ae", B: "#fff176", C: "#ffb74d", D
 function SpyBadge({ model }) {
   if (!model) return null;
   const conf = {
-    Bull:    { bg: "#10b98122", border: "#10b981", color: "#10b981", icon: "🟢" },
-    Caution: { bg: "#f59e0b22", border: "#f59e0b", color: "#f59e0b", icon: "🟡" },
-    Bear:    { bg: "#ef444422", border: "#ef4444", color: "#ef4444", icon: "🔴" },
-    Unknown: { bg: "#44444422", border: "#666",    color: "#999",    icon: "⚪" },
+    Bull:    { bg: `${TH.primary}22`, border: TH.primary, color: TH.primary },
+    Caution: { bg: `${TH.yellow}22`, border: TH.yellow, color: TH.yellow },
+    Bear:    { bg: `${TH.secondary}22`, border: TH.secondary, color: TH.secondary },
+    Unknown: { bg: `${TH.outline}22`, border: TH.outline, color: TH.textDim },
   };
   const s = conf[model.status] || conf.Unknown;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 6, background: s.bg, border: `1px solid ${s.border}`, fontSize: 10 }}>
-      <span>{s.icon} SPY 타이밍</span>
+      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: s.color }} /><span> SPY</span>
       <span style={{ fontWeight: 800, color: s.color }}>{model.status}</span>
       {model.spyPrice && (
         <span style={{ color: TH.textDim }}>
@@ -686,7 +686,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
         if (notifySignals.has("rsMakingHigh") && row.rsMakingHigh && !row.vcp)
           new Notification(`📈 RS신고가: ${row.ticker}`, { body: `TPR:${row.tpr} RPR:${row.rpr?.toFixed(0)} RS/SPY:${row.rsVsSpy}`, icon: "/vite.svg" });
         if (notifySignals.has("pocketPivot") && row.pocketPivot)
-          new Notification(`💡 포켓피봇: ${row.ticker}`, { body: `TPR:${row.tpr} RS/SPY:${row.rsVsSpy}`, icon: "/vite.svg" });
+          new Notification(`Pocket Pivot: ${row.ticker}`, { body: `TPR:${row.tpr} RS/SPY:${row.rsVsSpy}`, icon: "/vite.svg" });
         if (notifySignals.has("fundGrade") && row.fundGrade && row.stage2Loose)
           new Notification(`💰 펀더멘탈우수+상승추세: ${row.ticker}`, { body: `EPS:${row.epsThisY?.toFixed(0)}% 매출:${row.salesQQ?.toFixed(0)}%`, icon: "/vite.svg" });
       }
@@ -811,7 +811,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
               <span
                 onClick={onGoMScore}
                 style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 10px", borderRadius: 12, background: `${mscore.color}20`, border: `1px solid ${mscore.color}66`, color: mscore.color, fontSize: 11, fontWeight: 700, cursor: onGoMScore ? "pointer" : "default" }}>
-                🎯 {mscore.status} {mscore.score}
+                {mscore.status} {mscore.score}
               </span>
               <span style={{ fontSize: 10, color: TH.textDim }}>{mscore.label}</span>
             </div>
@@ -820,10 +820,10 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
           {/* ⑤ 시장 타이밍 경고 배너 (M-Score 연동) */}
           {spyWarning && (
             <div style={{ marginBottom: 6, padding: "5px 10px", borderRadius: 4, background: mscoreBear ? "#ef444422" : "#f59e0b22", border: `1px solid ${mscoreBear ? TH.red : TH.yellow}`, fontSize: 10, color: mscoreBear ? TH.red : TH.yellow, display: "flex", gap: 8, alignItems: "center" }}>
-              <span>{mscoreBear ? "🔴 BEAR 구간" : "🟡 주의구간"}: M-Score {mscore ? mscore.score : ""} {mscoreBear ? "(현금 비중 확대 권장)" : "(선별적 매수)"}</span>
+              <span>{mscoreBear ? "BEAR 구간" : "CAUTION"}: M-Score {mscore ? mscore.score : ""} {mscoreBear ? "(현금 비중 확대 권장)" : "(선별적 매수)"}</span>
               <span style={{ color: TH.textDim }}>→ TPR A+ 필터 + 엄격 모드 권장</span>
               <button onClick={() => { setActiveScreens(new Set(["bnb", "stage2", "tprA", "fundGrade"])); setFilterMode("group-and"); }}
-                style={{ padding: "1px 7px", fontSize: 9, border: `1px solid ${TH.yellow}`, borderRadius: 3, background: "transparent", color: TH.yellow, cursor: "pointer" }}>
+                style={{ padding: "1px 7px", fontSize: 9, border: `1px solid ${TH.outlineVar}`, borderRadius: 3, background: "transparent", color: TH.yellow, cursor: "pointer" }}>
                 자동 적용
               </button>
             </div>
@@ -875,21 +875,21 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {chartTicker && (
               <button onClick={() => setShowChart(p => !p)}
                 style={{ padding: "3px 6px", fontSize: 11, border: `1px solid ${showChart ? TH.cyan : TH.border}`, borderRadius: 4, background: showChart ? `${TH.cyan}15` : "transparent", color: showChart ? TH.cyan : TH.textDim, cursor: "pointer" }}>
-                {showChart ? "◀ 차트" : "▶ 차트"}
+                {showChart ? "Chart ◀" : "▶ Chart"}
               </button>
             )}
 
             {/* ⑦ CSV */}
             {sorted.length > 0 && (
-              <button onClick={exportCSV} style={{ padding: "3px 8px", fontSize: 11, border: `1px solid ${TH.blue}`, borderRadius: 4, background: "transparent", color: TH.blue, cursor: "pointer" }}>
-                ⬇ CSV
+              <button onClick={exportCSV} style={{ padding: "3px 8px", fontSize: 11, border: `1px solid ${TH.outlineVar}`, borderRadius: 4, background: "transparent", color: TH.primary, cursor: "pointer" }}>
+                CSV
               </button>
             )}
 
             {/* ④ 프리셋 */}
             <div style={{ position: "relative" }}>
-              <button onClick={() => setPresetDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 11, border: `1px solid ${TH.purple}`, borderRadius: 4, background: "transparent", color: TH.purple, cursor: "pointer" }}>
-                📋 프리셋
+              <button onClick={() => setPresetDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 11, border: `1px solid ${TH.outlineVar}`, borderRadius: 4, background: "transparent", color: TH.primary, cursor: "pointer" }}>
+                Preset
               </button>
               {presetDropdown && (
                 <div style={{ position: "absolute", top: "100%", left: 0, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>
@@ -915,7 +915,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {"Notification" in window && (
               <div style={{ position: "relative" }}>
                 <button onClick={toggleNotify} style={{ padding: "3px 8px", fontSize: 11, border: `1px solid ${notifyEnabled ? TH.green : TH.border}`, borderRadius: 4, background: notifyEnabled ? `${TH.green}22` : "transparent", color: notifyEnabled ? TH.green : TH.textDim, cursor: "pointer" }}>
-                  🔔 {notifyEnabled ? "ON" : "OFF"}
+                  {notifyEnabled ? "ON" : "OFF"}
                 </button>
                 {notifyEnabled && (
                   <button onClick={() => setShowNotifyPanel(p => !p)} style={{ marginLeft: 2, padding: "3px 6px", fontSize: 11, border: `1px solid ${TH.border}`, borderRadius: 4, background: "transparent", color: TH.textDim, cursor: "pointer" }}>⚙</button>
@@ -924,10 +924,10 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
                   <div style={{ position: "absolute", top: "100%", right: 0, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2, padding: "8px 12px" }}>
                     <div style={{ fontSize: 10, color: TH.textDim, marginBottom: 6, fontWeight: 700 }}>신호별 알림 설정</div>
                     {[
-                      { key: "vcp_break", label: "🔥 VCP + 돌파임박" },
-                      { key: "rsMakingHigh", label: "📈 RS 신고가" },
-                      { key: "pocketPivot", label: "💡 포켓피봇" },
-                      { key: "fundGrade", label: "💰 펀더멘탈 우수 + 상승추세" },
+                      { key: "vcp_break", label: "VCP + Break" },
+                      { key: "rsMakingHigh", label: "RS High" },
+                      { key: "pocketPivot", label: "Pocket Pivot" },
+                      { key: "fundGrade", label: "Fund + Trend" },
                     ].map(({ key, label }) => (
                       <label key={key} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", marginBottom: 5, fontSize: 11 }}>
                         <input type="checkbox" checked={notifySignals.has(key)}
@@ -943,8 +943,8 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {/* 관심목록 일괄 추가 */}
             {filtered.length > 0 && (
               <div style={{ position: "relative" }}>
-                <button onClick={() => setAddDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${TH.yellow}`, borderRadius: 4, background: "transparent", color: TH.yellow, cursor: "pointer", fontWeight: 700 }}>
-                  ★ 관심추가 ({filtered.length})
+                <button onClick={() => setAddDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${TH.outlineVar}`, borderRadius: 4, background: "transparent", color: TH.yellow, cursor: "pointer", fontWeight: 700 }}>
+                  Add Watch ({filtered.length})
                 </button>
                 {addDropdown && (
                   <div style={{ position: "absolute", top: "100%", left: 0, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 999, minWidth: 160, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>

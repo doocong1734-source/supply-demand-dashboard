@@ -40,34 +40,35 @@ function ValueBar({ value, min, max }) {
 }
 
 function ABCBadge({ grade }) {
-  const colors = { A: C.blue, B: C.green, C: C.yellow };
-  if (!grade) return <span>-</span>;
-  return <span style={{ display: "inline-block", width: 22, height: 22, borderRadius: "50%", textAlign: "center", lineHeight: "22px", fontWeight: 800, fontSize: 11, color: "#fff", backgroundColor: colors[grade] || "#666" }}>{grade}</span>;
+  const colors = { A: C.primary, B: C.tertiary, C: C.secondary };
+  if (!grade) return <span style={{ color: C.textDim }}>-</span>;
+  const c = colors[grade] || C.textDim;
+  return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", border: `2px solid ${c}`, fontWeight: 800, fontSize: 10, color: c, background: `${c}15`, letterSpacing: "0.05em" }}>{grade}</span>;
 }
 
 function SignalBadge({ signal, compact }) {
   const conf = {
-    "강력매수": { bg: "#10b98122", border: "#10b981", color: "#10b981" },
-    "매수": { bg: "#10b98115", border: "#10b98188", color: "#10b981cc" },
-    "관망↑": { bg: "#3b82f615", border: "#3b82f688", color: "#3b82f6" },
-    "중립": { bg: "#64748b15", border: "#64748b66", color: "#94a3b8" },
-    "관망↓": { bg: "#f59e0b15", border: "#f59e0b88", color: "#f59e0b" },
-    "매도": { bg: "#ef444415", border: "#ef444488", color: "#ef4444cc" },
-    "강력매도": { bg: "#ef444422", border: "#ef4444", color: "#ef4444" },
+    "강력매수": { bg: C.primary, color: "#002109", glow: true },
+    "매수": { bg: `${C.primary}cc`, color: "#002109" },
+    "관망↑": { bg: `${C.tertiary}30`, color: C.tertiary, border: `${C.tertiary}50` },
+    "중립": { bg: C.surfaceHighest, color: C.textDim, border: C.outlineVar },
+    "관망↓": { bg: `${C.yellow}30`, color: C.yellow, border: `${C.yellow}50` },
+    "매도": { bg: `${C.secondary}30`, color: C.secondary, border: `${C.secondary}50` },
+    "강력매도": { bg: C.secondary, color: "#410004" },
   };
   const c = conf[signal] || conf["중립"];
-  return <span style={{ padding: compact ? "1px 6px" : "2px 8px", borderRadius: 4, fontSize: compact ? 10 : 11, fontWeight: 700, background: c.bg, border: `1px solid ${c.border}`, color: c.color, whiteSpace: "nowrap", letterSpacing: 0.3 }}>{signal}</span>;
+  return <span style={{ padding: compact ? "2px 6px" : "2px 8px", borderRadius: 2, fontSize: compact ? 9 : 10, fontWeight: 900, background: c.bg, border: c.border ? `1px solid ${c.border}` : "none", color: c.color, whiteSpace: "nowrap", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: c.glow ? `0 0 12px ${C.primary}4d` : "none" }}>{signal}</span>;
 }
 
 function ScoreCell({ score }) {
   const pct = (score + 100) / 2;
-  const color = score >= 30 ? C.green : score >= -10 ? C.blue : score >= -30 ? C.yellow : C.red;
+  const color = score >= 30 ? C.primary : score >= -10 ? C.tertiary : score >= -30 ? C.yellow : C.secondary;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <div style={{ width: 50, height: 5, background: "#333", borderRadius: 3, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 3, transition: "width 0.3s" }} />
+      <div style={{ width: 50, height: 4, background: C.surfaceHighest, borderRadius: 9999, overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 9999, transition: "width 0.3s" }} />
       </div>
-      <span style={{ fontSize: 11, fontWeight: 700, color, minWidth: 28 }}>{score > 0 ? "+" : ""}{score}</span>
+      <span style={{ fontSize: 10, fontWeight: 800, color, minWidth: 28, fontFamily: "'Inter', sans-serif" }}>{score > 0 ? "+" : ""}{score}</span>
     </div>
   );
 }
@@ -177,7 +178,7 @@ function IndCard({ ind, bullish, bearish }) {
   const statusColor = bullish ? C.green : bearish ? C.red : C.textDim;
   return (
     <div
-      style={{ padding: 8, background: "#1f2937", borderRadius: 6, border: `1px solid ${C.borderLight}`, borderLeft: `3px solid ${statusColor}`, cursor: "help", position: "relative" }}
+      style={{ padding: 8, background: C.surface, borderRadius: 6, border: `1px solid ${C.borderLight}`, borderLeft: `3px solid ${statusColor}`, cursor: "help", position: "relative" }}
       onMouseEnter={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         setTip({ x: r.left, y: r.top, bottom: r.bottom });
@@ -186,7 +187,7 @@ function IndCard({ ind, bullish, bearish }) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
         <span style={{ fontSize: 10, color: C.textDim }}>{ind.name}</span>
-        <span style={{ fontSize: 8, padding: "1px 4px", borderRadius: 3, background: "#374151", color: C.textDim }}>{ind.cat}</span>
+        <span style={{ fontSize: 8, padding: "1px 4px", borderRadius: 3, background: C.surfaceHigh, color: C.textDim }}>{ind.cat}</span>
       </div>
       <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{ind.val}</div>
       <div style={{ fontSize: 10, fontWeight: 700, color: statusColor }}>{ind.status} {bullish ? "▲" : bearish ? "▼" : "─"}</div>
@@ -230,7 +231,7 @@ function RankRow({ rank, row, valueKey, isVol }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}` }}>
       <span style={{ width: 18, fontSize: 10, color: rank <= 3 ? C.yellow : C.textDim, textAlign: "right", fontWeight: 800 }}>{rank}</span>
-      <span style={{ padding: "1px 6px", borderRadius: 10, background: "#4a5568", color: "#fff", fontSize: 11, fontWeight: 700, minWidth: 46, textAlign: "center" }}>{row.ticker}</span>
+      <span style={{ padding: "1px 6px", borderRadius: 10, background: C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700, minWidth: 46, textAlign: "center" }}>{row.ticker}</span>
       <span style={{ fontSize: 10, color: C.textDim, flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{row.group}</span>
       <span style={{ fontSize: 12, fontWeight: 800, color, minWidth: 62, textAlign: "right" }}>
         {isVol ? fmtVol(val) : `${val >= 0 ? "+" : ""}${val?.toFixed(2)}%`}
@@ -243,7 +244,7 @@ function RankRow({ rank, row, valueKey, isVol }) {
 function RankColumn({ title, rows, valueKey, color, isVol }) {
   return (
     <div style={{ flex: 1, background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden", minWidth: 0 }}>
-      <div style={{ padding: "8px 10px", background: "#374151", borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 12, color }}>{title}</div>
+      <div style={{ padding: "8px 10px", background: C.surfaceHigh, borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 12, color }}>{title}</div>
       {rows.map((row, i) => (
         <RankRow key={row.ticker} rank={i + 1} row={row} valueKey={valueKey} isVol={isVol} />
       ))}
@@ -413,7 +414,7 @@ function TriggerPanel() {
           {icon} {title} <span style={{ color: C.textDim, fontWeight: 400 }}>({items.length})</span>
         </div>
         {items.map((item, i) => (
-          <div key={i} style={{ borderTop: `1px solid ${C.borderLight}`, background: chartTicker === item.ticker ? "#374151" : "#1e2530" }}>
+          <div key={i} style={{ borderTop: `1px solid ${C.borderLight}`, background: chartTicker === item.ticker ? C.surfaceHigh : C.surfaceAlt }}>
             <div
               onClick={() => setChartTicker(item.ticker)}
               onMouseEnter={e => e.currentTarget.style.background = "#263040"}
@@ -457,7 +458,7 @@ function TriggerPanel() {
         </div>
 
         {data?.cacheStats?.cached === 0 && (
-          <div style={{ padding: "8px 12px", borderRadius: 6, background: "#1f2937", border: `1px solid ${C.border}`, marginBottom: 10, fontSize: 11, color: C.yellow }}>
+          <div style={{ padding: "8px 12px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, marginBottom: 10, fontSize: 11, color: C.yellow }}>
             💡 스크리너를 먼저 실행하면 캐시된 데이터로 트리거를 확인할 수 있습니다.
           </div>
         )}
@@ -892,7 +893,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
               {presetDropdown && (
                 <div style={{ position: "absolute", top: "100%", left: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>
                   <div onClick={savePreset} style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: C.purple, borderBottom: `1px solid #333`, fontWeight: 700 }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#374151"} onMouseLeave={e => e.currentTarget.style.background = ""}>
+                    onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
                     + 현재 설정 저장
                   </div>
                   {presets.length === 0 && <div style={{ padding: "7px 14px", fontSize: 10, color: C.textDim }}>저장된 프리셋 없음</div>}
@@ -949,13 +950,13 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
                     {lists.map((list, i) => (
                       <div key={i} onClick={() => { filtered.forEach(r => addToList(r.ticker, i)); setAddDropdown(false); }}
                         style={{ padding: "7px 14px", fontSize: 12, cursor: "pointer", color: C.text, borderBottom: `1px solid #333` }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#374151"} onMouseLeave={e => e.currentTarget.style.background = ""}>
+                        onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
                         {i === activeIdx ? "★" : "☆"} {list.name}
                       </div>
                     ))}
                     <div onClick={() => { const n = prompt("새 목록 이름", "스크리너 결과"); if (n?.trim()) addList(n.trim()); setAddDropdown(false); }}
                       style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: C.textDim }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#374151"} onMouseLeave={e => e.currentTarget.style.background = ""}>
+                      onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
                       + 새 목록 만들기
                     </div>
                   </div>
@@ -1065,14 +1066,14 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             <tbody>
               {sorted.map((row, i) => (
                 <tr key={row.ticker} onClick={() => setChartTicker(t => t === row.ticker ? null : row.ticker)}
-                  style={{ cursor: "pointer", background: chartTicker === row.ticker ? "#374151" : i % 2 === 0 ? C.bg : "transparent" }}>
-                  {(() => { const rowBg = chartTicker === row.ticker ? "#374151" : i % 2 === 0 ? C.bg : C.bg; return (<>
+                  style={{ cursor: "pointer", background: chartTicker === row.ticker ? C.surfaceHigh : i % 2 === 0 ? C.bg : "transparent" }}>
+                  {(() => { const rowBg = chartTicker === row.ticker ? C.surfaceHigh : i % 2 === 0 ? C.bg : C.bg; return (<>
                   <td style={{ ...tdStyle, textAlign: "center", padding: "2px 2px", ...stickyStarTd(rowBg) }}>
                     <button onClick={e => { e.stopPropagation(); toggleFavorite(row.ticker); }}
                       style={{ background: "none", border: "none", cursor: "pointer", color: isInAnyList(row.ticker) ? C.yellow : "#444", fontSize: 13, padding: 0, lineHeight: 1 }}>★</button>
                   </td>
                   <td style={{ ...tdStyle, ...stickyTickerTd(rowBg) }}>
-                    <span style={{ padding: "1px 5px", borderRadius: 10, background: "#4a5568", color: "#fff", fontWeight: 700, fontSize: 11 }}>{row.ticker}</span>
+                    <span style={{ padding: "1px 5px", borderRadius: 10, background: C.surfaceHighest, color: "#fff", fontWeight: 700, fontSize: 11 }}>{row.ticker}</span>
                   </td>
                   </>); })()}
                   <td style={{ ...tdStyle, fontWeight: 600 }}>${row.price?.toFixed(2)}</td>
@@ -1332,11 +1333,12 @@ export default function Dashboard() {
     }
   }, [selected]);
 
-  const btnStyle = (active, color = C.green) => ({
-    padding: "7px 18px", fontSize: 16, fontWeight: 600,
-    border: `1px solid ${active ? color : C.border}`, borderRadius: 4,
+  const btnStyle = (active, color = C.primary) => ({
+    fontFamily: "'Inter', sans-serif", padding: "6px 14px", fontSize: 11, fontWeight: 700,
+    letterSpacing: "0.05em", textTransform: "uppercase",
+    border: `1px solid ${active ? color : C.outlineVar}`, borderRadius: 4,
     background: active ? `${color}18` : "transparent",
-    color: active ? color : C.textDim, cursor: "pointer",
+    color: active ? color : C.textDim, cursor: "pointer", transition: "all 0.15s",
   });
 
   // 티커 검색 (관심종목 탭에서)
@@ -1439,7 +1441,7 @@ export default function Dashboard() {
                 onChange={e => setWatchlistSearch(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch(watchlistSearch)}
                 placeholder="티커 검색 (예: AAPL, TSLA, 005930.KS)"
-                style={{ flex: 1, padding: "4px 10px", background: "#1f2937", border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 12, outline: "none" }}
+                style={{ flex: 1, padding: "4px 10px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 12, outline: "none" }}
               />
               <button
                 onClick={() => handleSearch(watchlistSearch)}
@@ -1522,15 +1524,15 @@ export default function Dashboard() {
                           || customFavData[fav];
                         if (!row) return (
                           <tr key={fav} style={{ backgroundColor: i % 2 === 0 ? C.bg : "transparent" }}>
-                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: "#4a5568", color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
+                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
                             <td style={{ ...tdStyle, color: C.textDim, fontSize: 11 }} colSpan={7}>⏳ 데이터 로딩 중...</td>
                             <td style={tdStyle}><button onClick={() => toggleFavorite(fav)} style={{ background: "none", border: "none", cursor: "pointer", color: C.yellow, fontSize: 16 }}>★</button></td>
                           </tr>
                         );
                         const isActive = selected?.ticker === fav;
                         return (
-                          <tr key={fav} onClick={() => handleSelectRow(row)} style={{ cursor: "pointer", backgroundColor: isActive ? "#374151" : i % 2 === 0 ? C.bg : "transparent" }}>
-                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: "#4a5568", color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
+                          <tr key={fav} onClick={() => handleSelectRow(row)} style={{ cursor: "pointer", backgroundColor: isActive ? C.surfaceHigh : i % 2 === 0 ? C.bg : "transparent" }}>
+                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
                             <td style={tdStyle}><ABCBadge grade={row.abc} /></td>
                             <ValueBar value={row.daily} min={-5} max={5} />
                             <ValueBar value={row["5d"]} min={-10} max={10} />
@@ -1635,7 +1637,7 @@ export default function Dashboard() {
                         const isActive = selected?.ticker === row.ticker && selected?.group === row.group;
                         const sectorColor = SECTOR_COLORS[row.sector] || "#666";
                         return (
-                          <tr key={`${row.group}-${row.ticker}`} ref={el => rowRefs.current[`${row.group}-${row.ticker}`] = el} onClick={() => handleSelectRow(row)} onContextMenu={e => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, ticker: row.ticker }); }} style={{ cursor: "pointer", transition: "background 0.15s", backgroundColor: isActive ? "#374151" : i % 2 === 0 ? C.bg : "transparent" }}>
+                          <tr key={`${row.group}-${row.ticker}`} ref={el => rowRefs.current[`${row.group}-${row.ticker}`] = el} onClick={() => handleSelectRow(row)} onContextMenu={e => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, ticker: row.ticker }); }} style={{ cursor: "pointer", transition: "background 0.15s", backgroundColor: isActive ? C.surfaceHigh : i % 2 === 0 ? C.bg : "transparent" }}>
                             <td style={tdStyle}>
                               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                 <button
@@ -1643,7 +1645,7 @@ export default function Dashboard() {
                                   title={isFavorite(row.ticker) ? "현재 목록에서 해제" : "현재 목록에 추가 (우클릭으로 목록 선택)"}
                                   style={{ background: "none", border: "none", cursor: "pointer", color: isInAnyList(row.ticker) ? C.yellow : "#444", fontSize: 12, padding: 0, lineHeight: 1, flexShrink: 0 }}
                                 >★</button>
-                                <span style={{ display: "inline-block", padding: "2px 6px", borderRadius: 12, backgroundColor: group === "Industries" ? sectorColor : "#4a5568", color: "#fff", fontSize: 11, fontWeight: 700 }}>{row.ticker}</span>
+                                <span style={{ display: "inline-block", padding: "2px 6px", borderRadius: 12, backgroundColor: group === "Industries" ? sectorColor : C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{row.ticker}</span>
                               </div>
                             </td>
                             <td style={tdStyle}><ABCBadge grade={row.abc} /></td>
@@ -1793,7 +1795,7 @@ export default function Dashboard() {
             </div>
 
             {/* 매매 판단 요약 */}
-            <div style={{ padding: 12, background: selected.score >= 30 ? "#10b98112" : selected.score <= -30 ? "#ef444412" : "#374151", borderRadius: 8, border: `1px solid ${selected.score >= 30 ? C.green + "44" : selected.score <= -30 ? C.red + "44" : C.border}` }}>
+            <div style={{ padding: 12, background: selected.score >= 30 ? "#10b98112" : selected.score <= -30 ? "#ef444412" : C.surfaceHigh, borderRadius: 8, border: `1px solid ${selected.score >= 30 ? C.green + "44" : selected.score <= -30 ? C.red + "44" : C.border}` }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: selected.score >= 30 ? C.green : selected.score <= -30 ? C.red : C.blueLight, marginBottom: 6 }}>매매 판단 요약</div>
               <div style={{ fontSize: 11, lineHeight: 1.7, color: C.text }}>
                 {selected.score >= 30 && selected.daily < 0 && <div>⚡ <b style={{ color: C.green }}>선행 매수 기회:</b> 수급 점수 +{selected.score}로 매수 시그널이지만 가격은 아직 {selected.daily}% 미반영 상태. 수급이 가격에 선행하고 있어 저가 매수 구간으로 판단.</div>}
@@ -1809,7 +1811,7 @@ export default function Dashboard() {
 
             {/* LETF */}
             {(selected.longETF?.length > 0 || selected.shortETF?.length > 0) && (
-              <div style={{ marginTop: 10, padding: 10, background: "#1f2937", borderRadius: 6, border: `1px solid ${C.borderLight}` }}>
+              <div style={{ marginTop: 10, padding: 10, background: C.surface, borderRadius: 6, border: `1px solid ${C.borderLight}` }}>
                 <div style={{ fontSize: 10, color: C.textDim, marginBottom: 4 }}>LEVERAGED ETF</div>
                 <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
                   {selected.longETF?.length > 0 && <span>LONG: {selected.longETF.map(e => <b key={e} style={{ color: C.greenBright, marginRight: 6 }}>{e}</b>)}</span>}
@@ -1828,7 +1830,7 @@ export default function Dashboard() {
         onClick={e => e.stopPropagation()}
         style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 9999, minWidth: 170, boxShadow: "0 6px 24px #000c", overflow: "hidden" }}
       >
-        <div style={{ padding: "6px 12px", fontSize: 12, fontWeight: 700, color: C.yellow, borderBottom: `1px solid ${C.border}`, background: "#1f2937" }}>
+        <div style={{ padding: "6px 12px", fontSize: 12, fontWeight: 700, color: C.yellow, borderBottom: `1px solid ${C.border}`, background: C.surface }}>
           {contextMenu.ticker}
         </div>
         {lists.map((list, i) => {
@@ -1838,7 +1840,7 @@ export default function Dashboard() {
               key={i}
               onClick={() => { inList ? removeFromList(contextMenu.ticker, i) : addToList(contextMenu.ticker, i); setContextMenu(null); }}
               style={{ padding: "7px 14px", fontSize: 12, cursor: "pointer", color: inList ? C.yellow : C.text, display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid #333` }}
-              onMouseEnter={e => e.currentTarget.style.background = "#374151"}
+              onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh}
               onMouseLeave={e => e.currentTarget.style.background = ""}
             >
               <span style={{ fontSize: 14 }}>{inList ? "★" : "☆"}</span>
@@ -1850,7 +1852,7 @@ export default function Dashboard() {
         <div
           onClick={() => { const n = prompt("새 목록 이름", "새 관심목록"); if (n) { addList(n); } setContextMenu(null); }}
           style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: C.textDim, borderTop: `1px solid ${C.border}` }}
-          onMouseEnter={e => e.currentTarget.style.background = "#374151"}
+          onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh}
           onMouseLeave={e => e.currentTarget.style.background = ""}
         >
           + 새 목록에 추가

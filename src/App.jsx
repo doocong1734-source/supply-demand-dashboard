@@ -2,12 +2,17 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useMarketData } from "./hooks/useMarketData.js";
 import { useFavorites } from "./hooks/useFavorites.js";
 
+// Design System - US.MARKET Terminal (Stitch 2026-04)
 const C = {
-  bg: "#1a1a1a", surface: "#2d3748", surfaceAlt: "#2a2a2a", border: "#444", borderLight: "#333",
-  text: "#e0e0e0", textDim: "#9ca3af", textBright: "#fff",
-  green: "#10b981", greenBright: "#4ade80", red: "#ef4444", redBright: "#f87171",
-  blue: "#3b82f6", blueLight: "#a5b4fc", purple: "#9c27b0", yellow: "#f59e0b",
-  orange: "#ff5722", cyan: "#00bcd4", pink: "#e91e63", teal: "#009688",
+  bg: "#0b1326", surface: "#171f33", surfaceAlt: "#131b2e", border: "#45474c", borderLight: "#2d3449",
+  surfaceHigh: "#222a3d", surfaceHighest: "#2d3449", surfaceLowest: "#060e20",
+  text: "#dae2fd", textDim: "#c5c6cd", textBright: "#f2f2f2",
+  green: "#4ae176", greenBright: "#6bff8f", red: "#ffb3ad", redBright: "#ffdad7",
+  blue: "#7bd0ff", blueLight: "#c4e7ff", purple: "#9c27b0", yellow: "#f59e0b",
+  orange: "#ff5722", cyan: "#7bd0ff", pink: "#e91e63", teal: "#009688",
+  primary: "#4ae176", secondary: "#ffb3ad", tertiary: "#7bd0ff",
+  outline: "#8f9097", outlineVar: "#45474c",
+  navBg: "rgba(15,23,42,0.9)", sidebarBg: "#020617",
 };
 
 const SECTOR_COLORS = {
@@ -81,8 +86,8 @@ function VARSChart({ data, width = 80, height = 24 }) {
   return <svg width={width} height={height} dangerouslySetInnerHTML={{ __html: bars }} style={{ display: "block" }} />;
 }
 
-const thStyle = { textAlign: "left", padding: "6px 6px", backgroundColor: C.surface, cursor: "pointer", userSelect: "none", fontWeight: 700, borderBottom: `1px solid ${C.border}`, color: C.text, fontSize: 11, whiteSpace: "nowrap" };
-const tdStyle = { padding: "5px 6px", borderBottom: `1px solid ${C.borderLight}`, verticalAlign: "middle", color: C.text, fontSize: 12 };
+const thStyle = { fontFamily: "'Inter', sans-serif", textAlign: "left", padding: "12px 8px", backgroundColor: C.surfaceLowest, cursor: "pointer", userSelect: "none", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `1px solid ${C.border}`, color: C.textDim, fontSize: 11, whiteSpace: "nowrap" };
+const tdStyle = { fontFamily: "'Inter', sans-serif", padding: "10px 8px", borderBottom: `1px solid ${C.borderLight}`, verticalAlign: "middle", color: C.text, fontSize: 12 };
 
 // Sticky column styles for ★ and Ticker
 const stickyStarTh = { position: "sticky", left: 0, zIndex: 3, backgroundColor: C.surface };
@@ -1376,7 +1381,33 @@ export default function Dashboard() {
 
   return (
     <>
-    <div style={{ fontFamily: "Arial, sans-serif", background: C.bg, color: C.text, display: "flex", height: "100vh", margin: 0, overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Inter', Arial, sans-serif", background: C.bg, color: C.text, display: "flex", flexDirection: "column", height: "100vh", margin: 0, overflow: "hidden" }}>
+      {/* ═══ TOP NAV BAR ═══ */}
+      <nav style={{ height: 52, flexShrink: 0, background: C.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${C.outlineVar}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", zIndex: 50 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.05em", color: C.primary }}>US.MARKET</span>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {[
+              ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
+              ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"],
+            ].map(([id, label]) => (
+              <button key={id} onClick={() => setViewMode(id)}
+                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 13, letterSpacing: "0.02em", padding: "6px 12px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${C.primary}` : "2px solid transparent", color: viewMode === id ? C.primary : C.textDim, cursor: "pointer", transition: "color 0.15s" }}>
+                {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: C.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em" }}>
+          <span style={{ color: C.textDim }}>TOTAL <b style={{ color: C.text }}>{stats.total}</b></span>
+          <span><span style={{ color: C.primary }}>BUY</span> <b>{stats.buy}</b></span>
+          <span><span style={{ color: C.secondary }}>SELL</span> <b>{stats.sell}</b></span>
+          <span><span style={{ color: C.primary }}>A</span> <b>{stats.gradeA}</b></span>
+          <span><span style={{ color: C.tertiary }}>C</span> <b>{stats.gradeC}</b></span>
+          {lastUpdated && <span style={{ color: C.textDim }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>}
+        </div>
+      </nav>
+    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
       {loading && data && (
         <div style={{ position: "fixed", top: 8, right: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px", fontSize: 11, color: C.textDim, zIndex: 50 }}>
           🔄 갱신 중...
@@ -1390,35 +1421,8 @@ export default function Dashboard() {
 
       {/* ═══ LEFT PANEL ═══ */}
       <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${C.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* Header */}
-        <div style={{ padding: "8px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <button style={btnStyle(viewMode === "combined")} onClick={() => setViewMode("combined")}>통합뷰</button>
-              <button style={btnStyle(viewMode === "original", C.blue)} onClick={() => setViewMode("original")}>시세뷰</button>
-              <button style={btnStyle(viewMode === "flow", C.purple)} onClick={() => setViewMode("flow")}>수급뷰</button>
-              <button style={btnStyle(viewMode === "watchlist", C.yellow)} onClick={() => setViewMode("watchlist")}>
-                ★ 관심종목 {totalCount > 0 && <span style={{ marginLeft: 3, background: C.yellow, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
-              </button>
-              <button style={btnStyle(viewMode === "rankings", C.cyan)} onClick={() => setViewMode("rankings")}>📊 랭킹</button>
-              <button style={btnStyle(viewMode === "mscore", C.green)} onClick={() => setViewMode("mscore")}>🎯 M-Score</button>
-              <button style={btnStyle(viewMode === "trigger", C.orange)} onClick={() => setViewMode("trigger")}>⚡ 트리거</button>
-              <button style={btnStyle(viewMode === "screener", C.orange)} onClick={() => setViewMode("screener")}>🔍 스크리너</button>
-              <button style={btnStyle(viewMode === "mijoomo", C.teal)} onClick={() => setViewMode("mijoomo")}>🌐 미주모</button>
-              {lastUpdated && (
-                <span style={{ fontSize: 10, color: C.textDim, marginLeft: 8 }}>
-                  🕐 {lastUpdated.toLocaleTimeString("ko-KR")} 갱신
-                </span>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 12, fontSize: 11 }}>
-              <span>TOTAL <b style={{ color: C.text }}>{stats.total}</b></span>
-              <span>BUY <b style={{ color: C.green }}>{stats.buy}</b></span>
-              <span>SELL <b style={{ color: C.red }}>{stats.sell}</b></span>
-              <span>A <b style={{ color: C.blue }}>{stats.gradeA}</b></span>
-              <span>C <b style={{ color: C.yellow }}>{stats.gradeC}</b></span>
-            </div>
-          </div>
+        {/* Header - Sub controls */}
+        <div style={{ padding: "8px 10px", background: C.surfaceAlt, borderBottom: `1px solid ${C.outlineVar}`, flexShrink: 0 }}>
           {(viewMode === "combined" || viewMode === "flow") && (
             <div style={{ display: "flex", gap: 4 }}>
               <button style={btnStyle(flowFilter === "all", "#888")} onClick={() => setFlowFilter("all")}>전체</button>
@@ -1853,6 +1857,7 @@ export default function Dashboard() {
         </div>
       </div>
     )}
+    </div>
     </>
   );
 }

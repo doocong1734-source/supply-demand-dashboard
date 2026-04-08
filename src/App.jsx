@@ -1383,33 +1383,56 @@ export default function Dashboard() {
 
   return (
     <>
-    <div style={{ fontFamily: "'Inter', Arial, sans-serif", background: C.bg, color: C.text, display: "flex", flexDirection: "column", height: "100vh", margin: 0, overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Inter', Arial, sans-serif", background: C.bg, color: C.text, height: "100vh", margin: 0, overflow: "hidden" }}>
       {/* ═══ TOP NAV BAR ═══ */}
-      <nav style={{ height: 52, flexShrink: 0, background: C.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${C.outlineVar}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", zIndex: 50 }}>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, height: 52, background: C.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", zIndex: 1000 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.05em", color: C.primary }}>US.MARKET</span>
-          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.05em", color: C.primary }}>US.MARKET</span>
+          <div style={{ display: "flex", alignItems: "center", height: 52 }}>
             {[
               ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
               ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"],
             ].map(([id, label]) => (
               <button key={id} onClick={() => setViewMode(id)}
-                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 13, letterSpacing: "0.02em", padding: "6px 12px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${C.primary}` : "2px solid transparent", color: viewMode === id ? C.primary : C.textDim, cursor: "pointer", transition: "color 0.15s" }}>
+                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 13, height: 52, padding: "0 14px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${C.primary}` : "2px solid transparent", color: viewMode === id ? C.primary : C.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
                 {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: C.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
               </button>
             ))}
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em" }}>
-          <span style={{ color: C.textDim }}>TOTAL <b style={{ color: C.text }}>{stats.total}</b></span>
-          <span><span style={{ color: C.primary }}>BUY</span> <b>{stats.buy}</b></span>
-          <span><span style={{ color: C.secondary }}>SELL</span> <b>{stats.sell}</b></span>
-          <span><span style={{ color: C.primary }}>A</span> <b>{stats.gradeA}</b></span>
-          <span><span style={{ color: C.tertiary }}>C</span> <b>{stats.gradeC}</b></span>
-          {lastUpdated && <span style={{ color: C.textDim }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {[
+            ["TOTAL", stats.total, C.textBright], ["BUY", stats.buy, C.primary], ["SELL", stats.sell, C.secondary], ["A", stats.gradeA, C.primary], ["C", stats.gradeC, C.tertiary],
+          ].map(([label, val, color]) => (
+            <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3px 10px", borderRadius: 6, background: C.surface }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color }}>{val}</span>
+            </div>
+          ))}
+          {lastUpdated && <span style={{ fontSize: 10, color: C.textDim, marginLeft: 4 }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>}
         </div>
       </nav>
-    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+
+      {/* ═══ SIDE NAV BAR ═══ */}
+      <aside style={{ position: "fixed", left: 0, top: 52, bottom: 0, width: 64, background: C.sidebarBg, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16, zIndex: 999 }}>
+        {[
+          ["filter_list", "Filters"], ["notifications_active", "Alerts"], ["account_balance_wallet", "Portfolio"], ["query_stats", "Analytics"], ["terminal", "Terminal"],
+        ].map(([icon, label]) => (
+          <div key={label} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "12px 0", color: C.textDim, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHigh; e.currentTarget.style.color = C.text; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textDim; }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20, marginBottom: 4 }}>{icon}</span>
+            <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</span>
+          </div>
+        ))}
+        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 20, color: C.textDim, cursor: "pointer" }}>help</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 20, color: C.textDim, cursor: "pointer" }}>settings</span>
+        </div>
+      </aside>
+
+      {/* ═══ MAIN CONTENT ═══ */}
+    <div style={{ marginLeft: 64, paddingTop: 52, display: "flex", height: "100vh", overflow: "hidden" }}>
       {loading && data && (
         <div style={{ position: "fixed", top: 8, right: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px", fontSize: 11, color: C.textDim, zIndex: 50 }}>
           🔄 갱신 중...

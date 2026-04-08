@@ -4,7 +4,7 @@ import { useFavorites } from "./hooks/useFavorites.js";
 import UnifiedTable from "./components/UnifiedTable.jsx";
 
 // Design System - US.MARKET Terminal (Stitch 2026-04)
-const C = {
+const TH = {
   bg: "#0b1326", surface: "#171f33", surfaceAlt: "#131b2e", border: "#45474c", borderLight: "#2d3449",
   surfaceHigh: "#222a3d", surfaceHighest: "#2d3449", surfaceLowest: "#060e20",
   text: "#dae2fd", textDim: "#c5c6cd", textBright: "#f2f2f2",
@@ -31,9 +31,9 @@ function ValueBar({ value, min, max }) {
   if (isPos && max > 0) pct = Math.min(100, (value / max) * 100);
   else if (!isPos && min < 0) pct = Math.min(100, (Math.abs(value) / Math.abs(min)) * 100);
   return (
-    <td style={{ ...tdStyle, color: isPos ? C.green : C.red, fontWeight: 700, fontSize: 12 }}>
+    <td style={{ ...tdStyle, color: isPos ? TH.green : TH.red, fontWeight: 700, fontSize: 12 }}>
       <div style={{ position: "relative", display: "inline-block", padding: "2px 4px", borderRadius: 3, minWidth: 50, textAlign: "right" }}>
-        <div style={{ position: "absolute", top: 0, height: "100%", borderRadius: 3, opacity: 0.2, zIndex: 0, maxWidth: "100%", width: `${pct}%`, backgroundColor: isPos ? C.green : C.red, ...(isPos ? { left: 0 } : { right: 0 }) }} />
+        <div style={{ position: "absolute", top: 0, height: "100%", borderRadius: 3, opacity: 0.2, zIndex: 0, maxWidth: "100%", width: `${pct}%`, backgroundColor: isPos ? TH.green : TH.red, ...(isPos ? { left: 0 } : { right: 0 }) }} />
         <span style={{ position: "relative", zIndex: 1 }}>{isPos ? "+" : ""}{value.toFixed(2)}%</span>
       </div>
     </td>
@@ -41,32 +41,32 @@ function ValueBar({ value, min, max }) {
 }
 
 function ABCBadge({ grade }) {
-  const colors = { "A": C.primary, "B": C.tertiary, "C": C.secondary };
-  if (!grade) return <span style={{ color: C.textDim }}>-</span>;
-  const c = colors[grade] || C.textDim;
+  const colors = { "A": TH.primary, "B": TH.tertiary, "C": TH.secondary };
+  if (!grade) return <span style={{ color: TH.textDim }}>-</span>;
+  const c = colors[grade] || TH.textDim;
   return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", border: `2px solid ${c}`, fontWeight: 800, fontSize: 10, color: c, background: `${c}15`, letterSpacing: "0.05em" }}>{grade}</span>;
 }
 
 function SignalBadge({ signal, compact }) {
   const conf = {
-    "강력매수": { bg: C.primary, color: "#002109", glow: true },
-    "매수": { bg: `${C.primary}cc`, color: "#002109" },
-    "관망↑": { bg: `${C.tertiary}30`, color: C.tertiary, border: `${C.tertiary}50` },
-    "중립": { bg: C.surfaceHighest, color: C.textDim, border: C.outlineVar },
-    "관망↓": { bg: `${C.yellow}30`, color: C.yellow, border: `${C.yellow}50` },
-    "매도": { bg: `${C.secondary}30`, color: C.secondary, border: `${C.secondary}50` },
-    "강력매도": { bg: C.secondary, color: "#410004" },
+    "강력매수": { bg: TH.primary, color: "#002109", glow: true },
+    "매수": { bg: `${TH.primary}cc`, color: "#002109" },
+    "관망↑": { bg: `${TH.tertiary}30`, color: TH.tertiary, border: `${TH.tertiary}50` },
+    "중립": { bg: TH.surfaceHighest, color: TH.textDim, border: TH.outlineVar },
+    "관망↓": { bg: `${TH.yellow}30`, color: TH.yellow, border: `${TH.yellow}50` },
+    "매도": { bg: `${TH.secondary}30`, color: TH.secondary, border: `${TH.secondary}50` },
+    "강력매도": { bg: TH.secondary, color: "#410004" },
   };
   const c = conf[signal] || conf["중립"];
-  return <span style={{ padding: compact ? "2px 6px" : "2px 8px", borderRadius: 2, fontSize: compact ? 9 : 10, fontWeight: 900, background: c.bg, border: c.border ? `1px solid ${c.border}` : "none", color: c.color, whiteSpace: "nowrap", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: c.glow ? `0 0 12px ${C.primary}4d` : "none" }}>{signal}</span>;
+  return <span style={{ padding: compact ? "2px 6px" : "2px 8px", borderRadius: 2, fontSize: compact ? 9 : 10, fontWeight: 900, background: c.bg, border: c.border ? `1px solid ${c.border}` : "none", color: c.color, whiteSpace: "nowrap", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: c.glow ? `0 0 12px ${TH.primary}4d` : "none" }}>{signal}</span>;
 }
 
 function ScoreCell({ score }) {
   const pct = (score + 100) / 2;
-  const color = score >= 30 ? C.primary : score >= -10 ? C.tertiary : score >= -30 ? C.yellow : C.secondary;
+  const color = score >= 30 ? TH.primary : score >= -10 ? TH.tertiary : score >= -30 ? TH.yellow : TH.secondary;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <div style={{ width: 50, height: 4, background: C.surfaceHighest, borderRadius: 9999, overflow: "hidden" }}>
+      <div style={{ width: 50, height: 4, background: TH.surfaceHighest, borderRadius: 9999, overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 9999, transition: "width 0.3s" }} />
       </div>
       <span style={{ fontSize: 10, fontWeight: 800, color, minWidth: 28, fontFamily: "'Inter', sans-serif" }}>{score > 0 ? "+" : ""}{score}</span>
@@ -82,20 +82,20 @@ function VARSChart({ data, width = 80, height = 24 }) {
   const maxIdx = data.indexOf(Math.max(...data));
   const bars = data.map((v, i) => {
     const h = ((v - min) / range) * height;
-    const color = i === maxIdx ? C.greenBright : "#888";
+    const color = i === maxIdx ? TH.greenBright : "#888";
     return `<rect x="${i * (width / data.length)}" y="${height - h}" width="${(width / data.length) - 1}" height="${h}" fill="${color}" rx="1"/>`;
   }).join("");
   return <svg width={width} height={height} dangerouslySetInnerHTML={{ __html: bars }} style={{ display: "block" }} />;
 }
 
-const thStyle = { fontFamily: "'Inter', sans-serif", textAlign: "left", padding: "12px 8px", backgroundColor: C.surfaceLowest, cursor: "pointer", userSelect: "none", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `1px solid ${C.border}`, color: C.textDim, fontSize: 11, whiteSpace: "nowrap" };
-const tdStyle = { fontFamily: "'Inter', sans-serif", padding: "10px 8px", borderBottom: `1px solid ${C.borderLight}`, verticalAlign: "middle", color: C.text, fontSize: 12 };
+const thStyle = { fontFamily: "'Inter', sans-serif", textAlign: "left", padding: "12px 8px", backgroundColor: TH.surfaceLowest, cursor: "pointer", userSelect: "none", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `1px solid ${TH.border}`, color: TH.textDim, fontSize: 11, whiteSpace: "nowrap" };
+const tdStyle = { fontFamily: "'Inter', sans-serif", padding: "10px 8px", borderBottom: `1px solid ${TH.borderLight}`, verticalAlign: "middle", color: TH.text, fontSize: 12 };
 
 // Sticky column styles for ★ and Ticker
-const stickyStarTh = { position: "sticky", left: 0, zIndex: 3, backgroundColor: C.surface };
-const stickyTickerTh = { position: "sticky", left: 24, zIndex: 3, backgroundColor: C.surface, borderRight: `2px solid ${C.border}` };
+const stickyStarTh = { position: "sticky", left: 0, zIndex: 3, backgroundColor: TH.surface };
+const stickyTickerTh = { position: "sticky", left: 24, zIndex: 3, backgroundColor: TH.surface, borderRight: `2px solid ${TH.border}` };
 const stickyStarTd = (bg) => ({ position: "sticky", left: 0, zIndex: 1, backgroundColor: bg });
-const stickyTickerTd = (bg) => ({ position: "sticky", left: 24, zIndex: 1, backgroundColor: bg, borderRight: `2px solid ${C.border}` });
+const stickyTickerTd = (bg) => ({ position: "sticky", left: 24, zIndex: 1, backgroundColor: bg, borderRight: `2px solid ${TH.border}` });
 
 // Metric tooltips
 const METRIC_TOOLTIPS = {
@@ -158,7 +158,7 @@ function TradingViewChart({ ticker }) {
   }, [ticker]);
 
   return (
-    <div style={{ width: "100%", height: 1000, borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}`, marginBottom: 12, background: "#1a1a1a" }}>
+    <div style={{ width: "100%", height: 1000, borderRadius: 8, overflow: "hidden", border: `1px solid ${TH.border}`, marginBottom: 12, background: "#1a1a1a" }}>
       <div className="tradingview-widget-container" ref={containerRef} style={{ height: "100%", width: "100%" }} />
     </div>
   );
@@ -167,8 +167,8 @@ function TradingViewChart({ ticker }) {
 function LoadingOverlay() {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(26,26,26,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 100, gap: 16 }}>
-      <div style={{ width: 48, height: 48, border: `4px solid ${C.border}`, borderTopColor: C.green, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <div style={{ color: C.textDim, fontSize: 14 }}>Yahoo Finance에서 실시간 데이터 로딩 중...</div>
+      <div style={{ width: 48, height: 48, border: `4px solid ${TH.border}`, borderTopColor: TH.green, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ color: TH.textDim, fontSize: 14 }}>Yahoo Finance에서 실시간 데이터 로딩 중...</div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -176,10 +176,10 @@ function LoadingOverlay() {
 
 function IndCard({ ind, bullish, bearish }) {
   const [tip, setTip] = useState(null);
-  const statusColor = bullish ? C.green : bearish ? C.red : C.textDim;
+  const statusColor = bullish ? TH.green : bearish ? TH.red : TH.textDim;
   return (
     <div
-      style={{ padding: 8, background: C.surface, borderRadius: 6, border: `1px solid ${C.borderLight}`, borderLeft: `3px solid ${statusColor}`, cursor: "help", position: "relative" }}
+      style={{ padding: 8, background: TH.surface, borderRadius: 6, border: `1px solid ${TH.borderLight}`, borderLeft: `3px solid ${statusColor}`, cursor: "help", position: "relative" }}
       onMouseEnter={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         setTip({ x: r.left, y: r.top, bottom: r.bottom });
@@ -187,10 +187,10 @@ function IndCard({ ind, bullish, bearish }) {
       onMouseLeave={() => setTip(null)}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-        <span style={{ fontSize: 10, color: C.textDim }}>{ind.name}</span>
-        <span style={{ fontSize: 8, padding: "1px 4px", borderRadius: 3, background: C.surfaceHigh, color: C.textDim }}>{ind.cat}</span>
+        <span style={{ fontSize: 10, color: TH.textDim }}>{ind.name}</span>
+        <span style={{ fontSize: 8, padding: "1px 4px", borderRadius: 3, background: TH.surfaceHigh, color: TH.textDim }}>{ind.cat}</span>
       </div>
-      <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{ind.val}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, color: TH.text }}>{ind.val}</div>
       <div style={{ fontSize: 10, fontWeight: 700, color: statusColor }}>{ind.status} {bullish ? "▲" : bearish ? "▼" : "─"}</div>
       {tip && (
         <div style={{
@@ -228,12 +228,12 @@ function fmtVol(v) {
 
 function RankRow({ rank, row, valueKey, isVol }) {
   const val = row[valueKey] ?? 0;
-  const color = isVol ? C.cyan : val >= 0 ? C.green : C.red;
+  const color = isVol ? TH.cyan : val >= 0 ? TH.green : TH.red;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}` }}>
-      <span style={{ width: 18, fontSize: 10, color: rank <= 3 ? C.yellow : C.textDim, textAlign: "right", fontWeight: 800 }}>{rank}</span>
-      <span style={{ padding: "1px 6px", borderRadius: 10, background: C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700, minWidth: 46, textAlign: "center" }}>{row.ticker}</span>
-      <span style={{ fontSize: 10, color: C.textDim, flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{row.group}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderBottom: `1px solid ${TH.borderLight}` }}>
+      <span style={{ width: 18, fontSize: 10, color: rank <= 3 ? TH.yellow : TH.textDim, textAlign: "right", fontWeight: 800 }}>{rank}</span>
+      <span style={{ padding: "1px 6px", borderRadius: 10, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700, minWidth: 46, textAlign: "center" }}>{row.ticker}</span>
+      <span style={{ fontSize: 10, color: TH.textDim, flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{row.group}</span>
       <span style={{ fontSize: 12, fontWeight: 800, color, minWidth: 62, textAlign: "right" }}>
         {isVol ? fmtVol(val) : `${val >= 0 ? "+" : ""}${val?.toFixed(2)}%`}
       </span>
@@ -244,8 +244,8 @@ function RankRow({ rank, row, valueKey, isVol }) {
 
 function RankColumn({ title, rows, valueKey, color, isVol }) {
   return (
-    <div style={{ flex: 1, background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden", minWidth: 0 }}>
-      <div style={{ padding: "8px 10px", background: C.surfaceHigh, borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 12, color }}>{title}</div>
+    <div style={{ flex: 1, background: TH.surface, borderRadius: 8, border: `1px solid ${TH.border}`, overflow: "hidden", minWidth: 0 }}>
+      <div style={{ padding: "8px 10px", background: TH.surfaceHigh, borderBottom: `1px solid ${TH.border}`, fontWeight: 700, fontSize: 12, color }}>{title}</div>
       {rows.map((row, i) => (
         <RankRow key={row.ticker} rank={i + 1} row={row} valueKey={valueKey} isVol={isVol} />
       ))}
@@ -321,8 +321,8 @@ function MScorePanel() {
   }, []);
   useEffect(() => { fetchData(); const t = setInterval(fetchData, 300000); return () => clearInterval(t); }, [fetchData]);
 
-  if (loading) return <div style={{ padding: 30, color: C.textDim, textAlign: "center" }}>M-Score 로딩 중...</div>;
-  if (!data || data.error) return <div style={{ padding: 30, color: C.red, textAlign: "center" }}>데이터 로드 실패</div>;
+  if (loading) return <div style={{ padding: 30, color: TH.textDim, textAlign: "center" }}>M-Score 로딩 중...</div>;
+  if (!data || data.error) return <div style={{ padding: 30, color: TH.red, textAlign: "center" }}>데이터 로드 실패</div>;
 
   const { score, status, label, color, details, spy, qqq, updatedAt } = data;
   const bgColor = `${color}10`;
@@ -333,11 +333,11 @@ function MScorePanel() {
     const isNeg = value < 0;
     return (
       <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 36px", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        <span style={{ fontSize: 11, color: C.textDim }}>{lbl}</span>
+        <span style={{ fontSize: 11, color: TH.textDim }}>{lbl}</span>
         <div style={{ height: 6, background: "#333", borderRadius: 3, overflow: "hidden" }}>
-          <div style={{ width: `${pct}%`, height: "100%", background: isNeg ? C.red : color, borderRadius: 3 }} />
+          <div style={{ width: `${pct}%`, height: "100%", background: isNeg ? TH.red : color, borderRadius: 3 }} />
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: isNeg ? C.red : color, textAlign: "right" }}>{value > 0 ? "+" : ""}{value}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: isNeg ? TH.red : color, textAlign: "right" }}>{value > 0 ? "+" : ""}{value}</span>
       </div>
     );
   };
@@ -350,20 +350,20 @@ function MScorePanel() {
           <span style={{ fontSize: 36, fontWeight: 900, color, lineHeight: 1 }}>{score}</span>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800, color }}>{status}</div>
-            <div style={{ fontSize: 12, color: C.textDim }}>{label}</div>
+            <div style={{ fontSize: 12, color: TH.textDim }}>{label}</div>
           </div>
-          <button onClick={fetchData} style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 10, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
+          <button onClick={fetchData} style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 10, background: "transparent", border: `1px solid ${TH.border}`, color: TH.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
         </div>
         <div style={{ height: 8, background: "#333", borderRadius: 4, overflow: "hidden", marginBottom: 4 }}>
           <div style={{ width: `${Math.min(100, Math.max(0, (score + 100) / 2))}%`, height: "100%", background: color, borderRadius: 4, transition: "width 0.5s" }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.textDim }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: TH.textDim }}>
           <span>-100 (BEAR)</span><span>{score}</span><span>+100 (BULL)</span>
         </div>
       </div>
 
-      <div style={{ padding: "12px 14px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, marginBottom: 10 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, marginBottom: 8 }}>세부 점수</div>
+      <div style={{ padding: "12px 14px", borderRadius: 6, background: TH.surface, border: `1px solid ${TH.border}`, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: TH.textDim, marginBottom: 8 }}>세부 점수</div>
         <DetailBar lbl="MA 포지션" value={details.maPosition} max={25} />
         <DetailBar lbl="MA200 기울기" value={details.ma200Slope} max={10} />
         <DetailBar lbl="광폭지수" value={details.breadth} max={15} />
@@ -373,21 +373,21 @@ function MScorePanel() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
         {[{ lbl: "SPY", d: spy }, { lbl: "QQQ", d: qqq }].map(({ lbl, d }) => (
-          <div key={lbl} style={{ padding: "10px 12px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.textBright, marginBottom: 4 }}>
-              {lbl} <span style={{ color: C.textDim, fontWeight: 400 }}>${d?.price}</span>
-              {" "}<span style={{ color: (d?.change1d ?? 0) >= 0 ? C.green : C.red, fontSize: 11 }}>{(d?.change1d ?? 0) > 0 ? "+" : ""}{d?.change1d}%</span>
+          <div key={lbl} style={{ padding: "10px 12px", borderRadius: 6, background: TH.surface, border: `1px solid ${TH.border}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: TH.textBright, marginBottom: 4 }}>
+              {lbl} <span style={{ color: TH.textDim, fontWeight: 400 }}>${d?.price}</span>
+              {" "}<span style={{ color: (d?.change1d ?? 0) >= 0 ? TH.green : TH.red, fontSize: 11 }}>{(d?.change1d ?? 0) > 0 ? "+" : ""}{d?.change1d}%</span>
             </div>
-            <div style={{ fontSize: 10, color: C.textDim }}>SMA50: {d?.sma50?.toFixed(0)} · SMA150: {d?.sma150?.toFixed(0)} · SMA200: {d?.sma200?.toFixed(0)}</div>
+            <div style={{ fontSize: 10, color: TH.textDim }}>SMA50: {d?.sma50?.toFixed(0)} · SMA150: {d?.sma150?.toFixed(0)} · SMA200: {d?.sma200?.toFixed(0)}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ padding: "8px 12px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 11, color: C.textDim }}>광폭지수</span>
-        <span style={{ fontSize: 12 }}>SPXA200R <b style={{ color: C.text }}>{details.breadthRaw?.spxa200r}%</b></span>
-        <span style={{ fontSize: 12 }}>SPXA50R <b style={{ color: C.text }}>{details.breadthRaw?.spxa50r}%</b></span>
-        <span style={{ fontSize: 10, color: C.textDim, marginLeft: "auto" }}>갱신: {timePart}</span>
+      <div style={{ padding: "8px 12px", borderRadius: 6, background: TH.surface, border: `1px solid ${TH.border}`, display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ fontSize: 11, color: TH.textDim }}>광폭지수</span>
+        <span style={{ fontSize: 12 }}>SPXA200R <b style={{ color: TH.text }}>{details.breadthRaw?.spxa200r}%</b></span>
+        <span style={{ fontSize: 12 }}>SPXA50R <b style={{ color: TH.text }}>{details.breadthRaw?.spxa50r}%</b></span>
+        <span style={{ fontSize: 10, color: TH.textDim, marginLeft: "auto" }}>갱신: {timePart}</span>
       </div>
       <MScoreAISummary />
     </div>
@@ -410,23 +410,23 @@ function TriggerPanel() {
   const Section = ({ icon, title, items, renderRow }) => {
     if (!items || items.length === 0) return null;
     return (
-      <div style={{ marginBottom: 10, borderRadius: 6, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-        <div style={{ padding: "7px 12px", background: C.surface, fontSize: 12, fontWeight: 700, color: C.textBright }}>
-          {icon} {title} <span style={{ color: C.textDim, fontWeight: 400 }}>({items.length})</span>
+      <div style={{ marginBottom: 10, borderRadius: 6, border: `1px solid ${TH.border}`, overflow: "hidden" }}>
+        <div style={{ padding: "7px 12px", background: TH.surface, fontSize: 12, fontWeight: 700, color: TH.textBright }}>
+          {icon} {title} <span style={{ color: TH.textDim, fontWeight: 400 }}>({items.length})</span>
         </div>
         {items.map((item, i) => (
-          <div key={i} style={{ borderTop: `1px solid ${C.borderLight}`, background: chartTicker === item.ticker ? C.surfaceHigh : C.surfaceAlt }}>
+          <div key={i} style={{ borderTop: `1px solid ${TH.borderLight}`, background: chartTicker === item.ticker ? TH.surfaceHigh : TH.surfaceAlt }}>
             <div
               onClick={() => setChartTicker(item.ticker)}
               onMouseEnter={e => e.currentTarget.style.background = "#263040"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               style={{ padding: "7px 12px", display: "flex", gap: 12, alignItems: "center", cursor: "pointer" }}>
-              <b style={{ color: C.yellow, fontSize: 12, minWidth: 52 }}>{item.ticker}</b>
+              <b style={{ color: TH.yellow, fontSize: 12, minWidth: 52 }}>{item.ticker}</b>
               {renderRow(item)}
               <AICommentBubble ticker={item.ticker} />
               <a href={`https://finviz.com/chart.ashx?t=${item.ticker}&ty=c&ta=1&p=d`} target="_blank" rel="noreferrer"
                 onClick={e => e.stopPropagation()}
-                style={{ marginLeft: "auto", fontSize: 10, color: C.textDim, textDecoration: "none", padding: "1px 6px", border: `1px solid ${C.border}`, borderRadius: 3 }}>
+                style={{ marginLeft: "auto", fontSize: 10, color: TH.textDim, textDecoration: "none", padding: "1px 6px", border: `1px solid ${TH.border}`, borderRadius: 3 }}>
                 Finviz ↗
               </a>
             </div>
@@ -436,7 +436,7 @@ function TriggerPanel() {
     );
   };
 
-  if (loading) return <div style={{ padding: 30, color: C.textDim, textAlign: "center" }}>트리거 로딩 중...</div>;
+  if (loading) return <div style={{ padding: 30, color: TH.textDim, textAlign: "center" }}>트리거 로딩 중...</div>;
 
   const timePart = data?.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "--:--";
   const empty = !data || data.totalCount === 0;
@@ -444,48 +444,48 @@ function TriggerPanel() {
   return (
     <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
       {/* 왼쪽: 트리거 목록 */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 16, borderRight: chartTicker ? `1px solid ${C.border}` : "none" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 16, borderRight: chartTicker ? `1px solid ${TH.border}` : "none" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 800 }}>⚡ 진입 트리거</span>
-            <span style={{ fontSize: 11, color: C.textDim }}>오늘 조건 충족 종목</span>
-            {data && <span style={{ background: (data.totalCount ?? 0) > 0 ? C.orange : "#555", color: "#fff", borderRadius: 8, padding: "1px 7px", fontSize: 10, fontWeight: 800 }}>{data.totalCount ?? 0}</span>}
+            <span style={{ fontSize: 11, color: TH.textDim }}>오늘 조건 충족 종목</span>
+            {data && <span style={{ background: (data.totalCount ?? 0) > 0 ? TH.orange : "#555", color: "#fff", borderRadius: 8, padding: "1px 7px", fontSize: 10, fontWeight: 800 }}>{data.totalCount ?? 0}</span>}
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {data?.cacheStats && <span style={{ fontSize: 10, color: C.textDim }}>캐시 {data.cacheStats.cached}/{data.cacheStats.total}</span>}
-            <span style={{ fontSize: 10, color: C.textDim }}>{timePart}</span>
-            <button onClick={fetchData} style={{ padding: "3px 10px", fontSize: 11, background: "transparent", border: `1px solid ${C.border}`, color: C.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
+            {data?.cacheStats && <span style={{ fontSize: 10, color: TH.textDim }}>캐시 {data.cacheStats.cached}/{data.cacheStats.total}</span>}
+            <span style={{ fontSize: 10, color: TH.textDim }}>{timePart}</span>
+            <button onClick={fetchData} style={{ padding: "3px 10px", fontSize: 11, background: "transparent", border: `1px solid ${TH.border}`, color: TH.textDim, borderRadius: 4, cursor: "pointer" }}>↻</button>
           </div>
         </div>
 
         {data?.cacheStats?.cached === 0 && (
-          <div style={{ padding: "8px 12px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, marginBottom: 10, fontSize: 11, color: C.yellow }}>
+          <div style={{ padding: "8px 12px", borderRadius: 6, background: TH.surface, border: `1px solid ${TH.border}`, marginBottom: 10, fontSize: 11, color: TH.yellow }}>
             💡 스크리너를 먼저 실행하면 캐시된 데이터로 트리거를 확인할 수 있습니다.
           </div>
         )}
 
         {empty ? (
-          <div style={{ padding: 40, textAlign: "center", color: C.textDim, fontSize: 13 }}>오늘 조건 충족 종목 없음</div>
+          <div style={{ padding: 40, textAlign: "center", color: TH.textDim, fontSize: 13 }}>오늘 조건 충족 종목 없음</div>
         ) : (
           <>
             <Section icon="🚀" title="52주 신고가 돌파" items={data.breakout52w} renderRow={item => <>
-              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-              <span style={{ fontSize: 10, color: C.textDim }}>TPR {item.tpr}</span>
-              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+              <span style={{ fontSize: 11, color: TH.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: TH.textDim }}>TPR {item.tpr}</span>
+              <span style={{ fontSize: 10, color: TH.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
             </>} />
             <Section icon="📐" title="VCP 완성" items={data.vcpComplete} renderRow={item => <>
-              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-              <span style={{ fontSize: 10, color: C.cyan }}>VCP점수 {item.vcpScore}</span>
-              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+              <span style={{ fontSize: 11, color: TH.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: TH.cyan }}>VCP점수 {item.vcpScore}</span>
+              <span style={{ fontSize: 10, color: TH.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
             </>} />
             <Section icon="📈" title="RS 신고가" items={data.rsMakingHigh} renderRow={item => <>
-              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-              <span style={{ fontSize: 10, color: C.blue }}>RS/SPY {item.rsVsSpy}</span>
-              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+              <span style={{ fontSize: 11, color: TH.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: TH.blue }}>RS/SPY {item.rsVsSpy}</span>
+              <span style={{ fontSize: 10, color: TH.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
             </>} />
             <Section icon="🎯" title="포켓피봇" items={data.pocketPivot} renderRow={item => <>
-              <span style={{ fontSize: 11, color: C.text }}>${item.price?.toFixed(2)}</span>
-              <span style={{ fontSize: 10, color: C.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
+              <span style={{ fontSize: 11, color: TH.text }}>${item.price?.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: TH.green }}>RS12m {item.rs12m?.toFixed(0)}</span>
             </>} />
           </>
         )}
@@ -494,9 +494,9 @@ function TriggerPanel() {
       {/* 오른쪽: TradingView 차트 */}
       {chartTicker && (
         <div style={{ width: 1040, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ padding: "8px 12px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontWeight: 700, fontSize: 14 }}>{chartTicker}</span>
-            <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
+            <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: TH.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
           </div>
           <TradingViewChart ticker={chartTicker} />
         </div>
@@ -512,11 +512,11 @@ function RankingsPanel({ data }) {
   const VOL_KEY = { daily: "dailyVol", weekly: "weeklyVol", monthly: "monthlyVol" };
   const periodLabel = { daily: "1일", weekly: "5일", monthly: "20일" };
   const volLabel = { daily: "일간", weekly: "주간", monthly: "월간" };
-  const mkBtn = (active, color = C.green) => ({
+  const mkBtn = (active, color = TH.green) => ({
     padding: "4px 10px", fontSize: 11, fontWeight: 600,
-    border: `1px solid ${active ? color : C.border}`, borderRadius: 4,
+    border: `1px solid ${active ? color : TH.border}`, borderRadius: 4,
     background: active ? `${color}18` : "transparent",
-    color: active ? color : C.textDim, cursor: "pointer",
+    color: active ? color : TH.textDim, cursor: "pointer",
   });
   const allRows = useMemo(() => {
     if (!data) return [];
@@ -535,16 +535,16 @@ function RankingsPanel({ data }) {
             <button key={p} style={mkBtn(period === p)} onClick={() => setPeriod(p)}>{label}</button>
           ))}
         </div>
-        <div style={{ width: 1, height: 20, background: C.border }} />
-        <button style={mkBtn(filterAUM, C.yellow)} onClick={() => setFilterAUM(p => !p)}>
+        <div style={{ width: 1, height: 20, background: TH.border }} />
+        <button style={mkBtn(filterAUM, TH.yellow)} onClick={() => setFilterAUM(p => !p)}>
           {filterAUM ? "✓ 시총 $1B+" : "전체 종목"}
         </button>
-        <span style={{ fontSize: 10, color: C.textDim }}>({allRows.length}개 종목)</span>
+        <span style={{ fontSize: 10, color: TH.textDim }}>({allRows.length}개 종목)</span>
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        <RankColumn title={`▲ 상승 TOP10 (${periodLabel[period]})`} rows={topGain} valueKey={pKey} color={C.green} isVol={false} />
-        <RankColumn title={`▼ 하락 TOP10 (${periodLabel[period]})`} rows={topLose} valueKey={pKey} color={C.red} isVol={false} />
-        <RankColumn title={`📊 거래량 TOP10 (${volLabel[period]})`} rows={topVol} valueKey={vKey} color={C.cyan} isVol={true} />
+        <RankColumn title={`▲ 상승 TOP10 (${periodLabel[period]})`} rows={topGain} valueKey={pKey} color={TH.green} isVol={false} />
+        <RankColumn title={`▼ 하락 TOP10 (${periodLabel[period]})`} rows={topLose} valueKey={pKey} color={TH.red} isVol={false} />
+        <RankColumn title={`📊 거래량 TOP10 (${volLabel[period]})`} rows={topVol} valueKey={vKey} color={TH.cyan} isVol={true} />
       </div>
     </div>
   );
@@ -587,7 +587,7 @@ function SpyBadge({ model }) {
       <span>{s.icon} SPY 타이밍</span>
       <span style={{ fontWeight: 800, color: s.color }}>{model.status}</span>
       {model.spyPrice && (
-        <span style={{ color: C.textDim }}>
+        <span style={{ color: TH.textDim }}>
           ${model.spyPrice} | MA50 ${model.spyMa50} | MA200 ${model.spyMa200}
         </span>
       )}
@@ -596,10 +596,10 @@ function SpyBadge({ model }) {
 }
 
 function VcpBar({ score }) {
-  const color = score >= 80 ? C.green : score >= 60 ? C.yellow : score >= 40 ? C.orange : "#555";
+  const color = score >= 80 ? TH.green : score >= 60 ? TH.yellow : score >= 40 ? TH.orange : "#555";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-      <div style={{ width: 30, height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }}>
+      <div style={{ width: 30, height: 6, background: TH.border, borderRadius: 3, overflow: "hidden" }}>
         <div style={{ width: `${score}%`, height: "100%", background: color, borderRadius: 3 }} />
       </div>
       <span style={{ fontSize: 9, color }}>{score}</span>
@@ -787,11 +787,11 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
   }
 
   const thS = { ...thStyle, fontSize: 10, cursor: "pointer" };
-  const mkBtn = (active, color = C.cyan) => ({
+  const mkBtn = (active, color = TH.cyan) => ({
     padding: "5px 12px", fontSize: 15, fontWeight: 600,
-    border: `1px solid ${active ? color : C.border}`, borderRadius: 4,
+    border: `1px solid ${active ? color : TH.border}`, borderRadius: 4,
     background: active ? `${color}22` : "transparent",
-    color: active ? color : C.textDim, cursor: "pointer",
+    color: active ? color : TH.textDim, cursor: "pointer",
   });
   const pct = progress.total > 0 ? (progress.i / progress.total) * 100 : 0;
   // ⑤ 시장 타이밍 경고 (M-Score 연동)
@@ -801,9 +801,9 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
 
   return (
     <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRight: chartTicker && showChart ? `1px solid ${C.border}` : "none" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRight: chartTicker && showChart ? `1px solid ${TH.border}` : "none" }}>
         {/* ── Controls ── */}
-        <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <div style={{ padding: "8px 12px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, flexShrink: 0 }}>
 
           {/* M-Score 미니 배지 */}
           {mscore && (
@@ -813,17 +813,17 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
                 style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 10px", borderRadius: 12, background: `${mscore.color}20`, border: `1px solid ${mscore.color}66`, color: mscore.color, fontSize: 11, fontWeight: 700, cursor: onGoMScore ? "pointer" : "default" }}>
                 🎯 {mscore.status} {mscore.score}
               </span>
-              <span style={{ fontSize: 10, color: C.textDim }}>{mscore.label}</span>
+              <span style={{ fontSize: 10, color: TH.textDim }}>{mscore.label}</span>
             </div>
           )}
 
           {/* ⑤ 시장 타이밍 경고 배너 (M-Score 연동) */}
           {spyWarning && (
-            <div style={{ marginBottom: 6, padding: "5px 10px", borderRadius: 4, background: mscoreBear ? "#ef444422" : "#f59e0b22", border: `1px solid ${mscoreBear ? C.red : C.yellow}`, fontSize: 10, color: mscoreBear ? C.red : C.yellow, display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ marginBottom: 6, padding: "5px 10px", borderRadius: 4, background: mscoreBear ? "#ef444422" : "#f59e0b22", border: `1px solid ${mscoreBear ? TH.red : TH.yellow}`, fontSize: 10, color: mscoreBear ? TH.red : TH.yellow, display: "flex", gap: 8, alignItems: "center" }}>
               <span>{mscoreBear ? "🔴 BEAR 구간" : "🟡 주의구간"}: M-Score {mscore ? mscore.score : ""} {mscoreBear ? "(현금 비중 확대 권장)" : "(선별적 매수)"}</span>
-              <span style={{ color: C.textDim }}>→ TPR A+ 필터 + 엄격 모드 권장</span>
+              <span style={{ color: TH.textDim }}>→ TPR A+ 필터 + 엄격 모드 권장</span>
               <button onClick={() => { setActiveScreens(new Set(["bnb", "stage2", "tprA", "fundGrade"])); setFilterMode("group-and"); }}
-                style={{ padding: "1px 7px", fontSize: 9, border: `1px solid ${C.yellow}`, borderRadius: 3, background: "transparent", color: C.yellow, cursor: "pointer" }}>
+                style={{ padding: "1px 7px", fontSize: 9, border: `1px solid ${TH.yellow}`, borderRadius: 3, background: "transparent", color: TH.yellow, cursor: "pointer" }}>
                 자동 적용
               </button>
             </div>
@@ -831,7 +831,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
 
           {/* Row 1: universe / price / limit / run / CSV / 프리셋 */}
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-            <select value={universe} onChange={e => setUniverse(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 15 }}>
+            <select value={universe} onChange={e => setUniverse(e.target.value)} style={{ background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 15 }}>
               <option value="nasdaq100">NASDAQ 100</option>
               <option value="sp500">S&amp;P 500</option>
               <option value="sp100">S&amp;P 100</option>
@@ -840,30 +840,30 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
               <option value="custom">직접 입력</option>
             </select>
             {universe === "custom" && (
-              <input value={customInput} onChange={e => setCustomInput(e.target.value)} placeholder="AAPL,MSFT,NVDA" style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 15, width: 160 }} />
+              <input value={customInput} onChange={e => setCustomInput(e.target.value)} placeholder="AAPL,MSFT,NVDA" style={{ background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 15, width: 160 }} />
             )}
-            <span style={{ fontSize: 14, color: C.textDim }}>$</span>
-            <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 58 }} />
-            <span style={{ fontSize: 14, color: C.textDim }}>~</span>
-            <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 70 }} />
-            <span style={{ fontSize: 14, color: C.textDim }}>최대</span>
-            <input type="number" value={limit} onChange={e => setLimit(e.target.value)} style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 56 }} />
-            <button onClick={handleRun} style={{ padding: "6px 18px", fontSize: 15, fontWeight: 700, border: "none", borderRadius: 4, background: running ? C.red : C.green, color: "#000", cursor: "pointer" }}>
+            <span style={{ fontSize: 14, color: TH.textDim }}>$</span>
+            <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 58 }} />
+            <span style={{ fontSize: 14, color: TH.textDim }}>~</span>
+            <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 70 }} />
+            <span style={{ fontSize: 14, color: TH.textDim }}>최대</span>
+            <input type="number" value={limit} onChange={e => setLimit(e.target.value)} style={{ background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 4, padding: "5px 6px", fontSize: 15, width: 56 }} />
+            <button onClick={handleRun} style={{ padding: "6px 18px", fontSize: 15, fontWeight: 700, border: "none", borderRadius: 4, background: running ? TH.red : TH.green, color: "#000", cursor: "pointer" }}>
               {running ? "■ 중지" : "▶ 실행"}
             </button>
-            <span style={{ fontSize: 14, color: C.textDim, minWidth: 52 }}>{filtered.length}/{results.length}개</span>
+            <span style={{ fontSize: 14, color: TH.textDim, minWidth: 52 }}>{filtered.length}/{results.length}개</span>
             {spyModel && <SpyBadge model={spyModel} />}
 
             {/* 자동 갱신 */}
             <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: 4 }}>
-              {lastRunTime && <span style={{ fontSize: 9, color: C.textDim }}>{lastRunTime.toLocaleTimeString()} 갱신</span>}
-              <label style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: autoRefresh ? C.green : C.textDim, cursor: "pointer" }}>
+              {lastRunTime && <span style={{ fontSize: 9, color: TH.textDim }}>{lastRunTime.toLocaleTimeString()} 갱신</span>}
+              <label style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 9, color: autoRefresh ? TH.green : TH.textDim, cursor: "pointer" }}>
                 <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} style={{ width: 12, height: 12 }} />
                 자동
               </label>
               {autoRefresh && (
                 <select value={refreshInterval} onChange={e => setRefreshInterval(Number(e.target.value))}
-                  style={{ background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: "1px 3px", fontSize: 9 }}>
+                  style={{ background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "1px 3px", fontSize: 9 }}>
                   <option value={1}>1분</option>
                   <option value={5}>5분</option>
                   <option value={10}>10분</option>
@@ -874,37 +874,37 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {/* 차트 토글 */}
             {chartTicker && (
               <button onClick={() => setShowChart(p => !p)}
-                style={{ padding: "5px 8px", fontSize: 15, border: `1px solid ${showChart ? C.cyan : C.border}`, borderRadius: 4, background: showChart ? `${C.cyan}15` : "transparent", color: showChart ? C.cyan : C.textDim, cursor: "pointer" }}>
+                style={{ padding: "5px 8px", fontSize: 15, border: `1px solid ${showChart ? TH.cyan : TH.border}`, borderRadius: 4, background: showChart ? `${TH.cyan}15` : "transparent", color: showChart ? TH.cyan : TH.textDim, cursor: "pointer" }}>
                 {showChart ? "◀ 차트" : "▶ 차트"}
               </button>
             )}
 
             {/* ⑦ CSV */}
             {sorted.length > 0 && (
-              <button onClick={exportCSV} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${C.blue}`, borderRadius: 4, background: "transparent", color: C.blue, cursor: "pointer" }}>
+              <button onClick={exportCSV} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${TH.blue}`, borderRadius: 4, background: "transparent", color: TH.blue, cursor: "pointer" }}>
                 ⬇ CSV
               </button>
             )}
 
             {/* ④ 프리셋 */}
             <div style={{ position: "relative" }}>
-              <button onClick={() => setPresetDropdown(p => !p)} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${C.purple}`, borderRadius: 4, background: "transparent", color: C.purple, cursor: "pointer" }}>
+              <button onClick={() => setPresetDropdown(p => !p)} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${TH.purple}`, borderRadius: 4, background: "transparent", color: TH.purple, cursor: "pointer" }}>
                 📋 프리셋
               </button>
               {presetDropdown && (
-                <div style={{ position: "absolute", top: "100%", left: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>
-                  <div onClick={savePreset} style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: C.purple, borderBottom: `1px solid #333`, fontWeight: 700 }}
-                    onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
+                <div style={{ position: "absolute", top: "100%", left: 0, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>
+                  <div onClick={savePreset} style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: TH.purple, borderBottom: `1px solid #333`, fontWeight: 700 }}
+                    onMouseEnter={e => e.currentTarget.style.background = TH.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
                     + 현재 설정 저장
                   </div>
-                  {presets.length === 0 && <div style={{ padding: "7px 14px", fontSize: 10, color: C.textDim }}>저장된 프리셋 없음</div>}
+                  {presets.length === 0 && <div style={{ padding: "7px 14px", fontSize: 10, color: TH.textDim }}>저장된 프리셋 없음</div>}
                   {presets.map((p, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", padding: "6px 14px", borderBottom: `1px solid #333` }}>
-                      <span onClick={() => loadPreset(p)} style={{ flex: 1, fontSize: 11, cursor: "pointer", color: C.text }}
-                        onMouseEnter={e => e.currentTarget.style.color = C.purple} onMouseLeave={e => e.currentTarget.style.color = C.text}>
+                      <span onClick={() => loadPreset(p)} style={{ flex: 1, fontSize: 11, cursor: "pointer", color: TH.text }}
+                        onMouseEnter={e => e.currentTarget.style.color = TH.purple} onMouseLeave={e => e.currentTarget.style.color = TH.text}>
                         {p.name}
                       </span>
-                      <button onClick={() => deletePreset(i)} style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 11, padding: "0 2px" }}>×</button>
+                      <button onClick={() => deletePreset(i)} style={{ background: "none", border: "none", color: TH.red, cursor: "pointer", fontSize: 11, padding: "0 2px" }}>×</button>
                     </div>
                   ))}
                 </div>
@@ -914,15 +914,15 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {/* ⑧ 알림 */}
             {"Notification" in window && (
               <div style={{ position: "relative" }}>
-                <button onClick={toggleNotify} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${notifyEnabled ? C.green : C.border}`, borderRadius: 4, background: notifyEnabled ? `${C.green}22` : "transparent", color: notifyEnabled ? C.green : C.textDim, cursor: "pointer" }}>
+                <button onClick={toggleNotify} style={{ padding: "5px 12px", fontSize: 15, border: `1px solid ${notifyEnabled ? TH.green : TH.border}`, borderRadius: 4, background: notifyEnabled ? `${TH.green}22` : "transparent", color: notifyEnabled ? TH.green : TH.textDim, cursor: "pointer" }}>
                   🔔 {notifyEnabled ? "ON" : "OFF"}
                 </button>
                 {notifyEnabled && (
-                  <button onClick={() => setShowNotifyPanel(p => !p)} style={{ marginLeft: 2, padding: "5px 8px", fontSize: 15, border: `1px solid ${C.border}`, borderRadius: 4, background: "transparent", color: C.textDim, cursor: "pointer" }}>⚙</button>
+                  <button onClick={() => setShowNotifyPanel(p => !p)} style={{ marginLeft: 2, padding: "5px 8px", fontSize: 15, border: `1px solid ${TH.border}`, borderRadius: 4, background: "transparent", color: TH.textDim, cursor: "pointer" }}>⚙</button>
                 )}
                 {showNotifyPanel && notifyEnabled && (
-                  <div style={{ position: "absolute", top: "100%", right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2, padding: "8px 12px" }}>
-                    <div style={{ fontSize: 10, color: C.textDim, marginBottom: 6, fontWeight: 700 }}>신호별 알림 설정</div>
+                  <div style={{ position: "absolute", top: "100%", right: 0, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 999, minWidth: 200, boxShadow: "0 4px 16px #000a", marginTop: 2, padding: "8px 12px" }}>
+                    <div style={{ fontSize: 10, color: TH.textDim, marginBottom: 6, fontWeight: 700 }}>신호별 알림 설정</div>
                     {[
                       { key: "vcp_break", label: "🔥 VCP + 돌파임박" },
                       { key: "rsMakingHigh", label: "📈 RS 신고가" },
@@ -943,21 +943,21 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             {/* 관심목록 일괄 추가 */}
             {filtered.length > 0 && (
               <div style={{ position: "relative" }}>
-                <button onClick={() => setAddDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${C.yellow}`, borderRadius: 4, background: "transparent", color: C.yellow, cursor: "pointer", fontWeight: 700 }}>
+                <button onClick={() => setAddDropdown(p => !p)} style={{ padding: "3px 8px", fontSize: 10, border: `1px solid ${TH.yellow}`, borderRadius: 4, background: "transparent", color: TH.yellow, cursor: "pointer", fontWeight: 700 }}>
                   ★ 관심추가 ({filtered.length})
                 </button>
                 {addDropdown && (
-                  <div style={{ position: "absolute", top: "100%", left: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 999, minWidth: 160, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>
+                  <div style={{ position: "absolute", top: "100%", left: 0, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 999, minWidth: 160, boxShadow: "0 4px 16px #000a", marginTop: 2 }}>
                     {lists.map((list, i) => (
                       <div key={i} onClick={() => { filtered.forEach(r => addToList(r.ticker, i)); setAddDropdown(false); }}
-                        style={{ padding: "7px 14px", fontSize: 12, cursor: "pointer", color: C.text, borderBottom: `1px solid #333` }}
-                        onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
+                        style={{ padding: "7px 14px", fontSize: 12, cursor: "pointer", color: TH.text, borderBottom: `1px solid #333` }}
+                        onMouseEnter={e => e.currentTarget.style.background = TH.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
                         {i === activeIdx ? "★" : "☆"} {list.name}
                       </div>
                     ))}
                     <div onClick={() => { const n = prompt("새 목록 이름", "스크리너 결과"); if (n?.trim()) addList(n.trim()); setAddDropdown(false); }}
-                      style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: C.textDim }}
-                      onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
+                      style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: TH.textDim }}
+                      onMouseEnter={e => e.currentTarget.style.background = TH.surfaceHigh} onMouseLeave={e => e.currentTarget.style.background = ""}>
                       + 새 목록 만들기
                     </div>
                   </div>
@@ -969,19 +969,19 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
           {/* Row 2: ① 필터 모드 + 시그널 필터 버튼 */}
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
             {/* 필터 로직 모드 */}
-            <div style={{ display: "flex", gap: 2, border: `1px solid ${C.border}`, borderRadius: 4, padding: "1px", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 2, border: `1px solid ${TH.border}`, borderRadius: 4, padding: "1px", flexShrink: 0 }}>
               {[["any","OR (하나이상)"], ["group-and","그룹AND"], ["all","전체AND (엄격)"]].map(([val, label]) => (
                 <button key={val} onClick={() => setFilterMode(val)}
                   style={{ padding: "2px 7px", fontSize: 9, fontWeight: 700, border: "none", borderRadius: 3, cursor: "pointer",
-                    background: filterMode === val ? (val === "all" ? C.red : val === "group-and" ? C.orange : C.blue) : "transparent",
-                    color: filterMode === val ? "#fff" : C.textDim }}>
+                    background: filterMode === val ? (val === "all" ? TH.red : val === "group-and" ? TH.orange : TH.blue) : "transparent",
+                    color: filterMode === val ? "#fff" : TH.textDim }}>
                   {label}
                 </button>
               ))}
             </div>
             {Object.entries(SCREEN_GROUPS).map(([group, keys]) => (
               <div key={group} style={{ display: "flex", gap: 2, alignItems: "center" }}>
-                <span style={{ fontSize: 9, color: C.textDim }}>{group}:</span>
+                <span style={{ fontSize: 9, color: TH.textDim }}>{group}:</span>
                 {keys.map(key => (
                   <button key={key} style={mkBtn(activeScreens.has(key))} onClick={() => toggleScreen(key)} title={SCREEN_LABELS[key]}>
                     {SCREEN_LABELS[key]}
@@ -995,25 +995,25 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
           {/* Row 3: ③ 수치 필터 */}
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <button onClick={() => setShowNumFilter(p => !p)}
-              style={{ padding: "2px 8px", fontSize: 9, border: `1px solid ${showNumFilter || minRpr > 0 || minRsSpy > 0 || minEpsThisY !== "" || minSalesQQ !== "" ? C.cyan : C.border}`, borderRadius: 4, background: "transparent", color: showNumFilter ? C.cyan : C.textDim, cursor: "pointer" }}>
+              style={{ padding: "2px 8px", fontSize: 9, border: `1px solid ${showNumFilter || minRpr > 0 || minRsSpy > 0 || minEpsThisY !== "" || minSalesQQ !== "" ? TH.cyan : TH.border}`, borderRadius: 4, background: "transparent", color: showNumFilter ? TH.cyan : TH.textDim, cursor: "pointer" }}>
               ⚙ 수치 필터 {(minRpr > 0 || minRsSpy > 0 || minEpsThisY !== "" || minSalesQQ !== "") ? "●" : ""}
             </button>
             {showNumFilter && (
               <>
-                <span style={{ fontSize: 9, color: C.textDim }}>RPR≥</span>
+                <span style={{ fontSize: 9, color: TH.textDim }}>RPR≥</span>
                 <input type="number" value={minRpr} onChange={e => setMinRpr(Number(e.target.value))} min={0} max={100}
-                  style={{ width: 38, background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
-                <span style={{ fontSize: 9, color: C.textDim }}>RS/SPY≥</span>
+                  style={{ width: 38, background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
+                <span style={{ fontSize: 9, color: TH.textDim }}>RS/SPY≥</span>
                 <input type="number" value={minRsSpy} onChange={e => setMinRsSpy(Number(e.target.value))} min={0} max={100}
-                  style={{ width: 38, background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
-                <span style={{ fontSize: 9, color: C.textDim }}>EPS올해≥</span>
+                  style={{ width: 38, background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
+                <span style={{ fontSize: 9, color: TH.textDim }}>EPS올해≥</span>
                 <input type="number" value={minEpsThisY} onChange={e => setMinEpsThisY(e.target.value)} placeholder="%"
-                  style={{ width: 42, background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
-                <span style={{ fontSize: 9, color: C.textDim }}>매출Q≥</span>
+                  style={{ width: 42, background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
+                <span style={{ fontSize: 9, color: TH.textDim }}>매출Q≥</span>
                 <input type="number" value={minSalesQQ} onChange={e => setMinSalesQQ(e.target.value)} placeholder="%"
-                  style={{ width: 42, background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
+                  style={{ width: 42, background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 10 }} />
                 <button onClick={() => { setMinRpr(0); setMinRsSpy(0); setMinEpsThisY(""); setMinSalesQQ(""); }}
-                  style={{ padding: "2px 6px", fontSize: 9, border: `1px solid ${C.border}`, borderRadius: 3, background: "transparent", color: C.red, cursor: "pointer" }}>초기화</button>
+                  style={{ padding: "2px 6px", fontSize: 9, border: `1px solid ${TH.border}`, borderRadius: 3, background: "transparent", color: TH.red, cursor: "pointer" }}>초기화</button>
               </>
             )}
           </div>
@@ -1021,12 +1021,12 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
           {/* 프로그레스 바 */}
           {(running || progress.total > 0) && (
             <div style={{ marginTop: 5 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: C.textDim, marginBottom: 2 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: TH.textDim, marginBottom: 2 }}>
                 <span>{progress.ticker}</span>
                 <span>{progress.i}/{progress.total} 분석 · 통과 {progress.passing}</span>
               </div>
-              <div style={{ height: 3, background: C.border, borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${pct}%`, background: C.green, transition: "width 0.2s", borderRadius: 2 }} />
+              <div style={{ height: 3, background: TH.border, borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${pct}%`, background: TH.green, transition: "width 0.2s", borderRadius: 2 }} />
               </div>
             </div>
           )}
@@ -1035,7 +1035,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
         {/* ── Results table ── */}
         <div style={{ flex: 1, overflow: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: 11 }}>
-            <thead style={{ position: "sticky", top: 0, zIndex: 2, background: C.surface }}>
+            <thead style={{ position: "sticky", top: 0, zIndex: 2, background: TH.surface }}>
               <tr>
                 <th style={{ ...thS, width: 24, ...stickyStarTh }}>★</th>
                 <th style={{ ...thS, width: 65, ...stickyTickerTh }} onClick={() => toggleSort("ticker")} title={METRIC_TOOLTIPS.ticker}>Ticker</th>
@@ -1046,7 +1046,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
                 <th style={{ ...thS, width: 52, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("rs12m")} title={METRIC_TOOLTIPS.rs12m}>RS12m%</th>
                 <th style={{ ...thS, width: 48, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("vcpScore")} title={METRIC_TOOLTIPS.vcpScore}>VCP점수</th>
                 {/* ② 종합 패스 수 */}
-                <th style={{ ...thS, width: 38, color: C.cyan, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("passCount")} title={METRIC_TOOLTIPS.passCount}>
+                <th style={{ ...thS, width: 38, color: TH.cyan, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("passCount")} title={METRIC_TOOLTIPS.passCount}>
                   패스{sortKey === "passCount" ? (sortDir === "desc" ? "▼" : "▲") : ""}
                 </th>
                 <th style={{ ...thS, width: 50, borderBottom: "1px dotted #666", cursor: "help" }} onClick={() => toggleSort("epsThisY")} title={METRIC_TOOLTIPS.epsThisY}>EPS올해</th>
@@ -1067,25 +1067,25 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             <tbody>
               {sorted.map((row, i) => (
                 <tr key={row.ticker} onClick={() => setChartTicker(t => t === row.ticker ? null : row.ticker)}
-                  style={{ cursor: "pointer", background: chartTicker === row.ticker ? C.surfaceHigh : i % 2 === 0 ? C.bg : "transparent" }}>
-                  {(() => { const rowBg = chartTicker === row.ticker ? C.surfaceHigh : i % 2 === 0 ? C.bg : C.bg; return (<>
+                  style={{ cursor: "pointer", background: chartTicker === row.ticker ? TH.surfaceHigh : i % 2 === 0 ? TH.bg : "transparent" }}>
+                  {(() => { const rowBg = chartTicker === row.ticker ? TH.surfaceHigh : i % 2 === 0 ? TH.bg : TH.bg; return (<>
                   <td style={{ ...tdStyle, textAlign: "center", padding: "2px 2px", ...stickyStarTd(rowBg) }}>
                     <button onClick={e => { e.stopPropagation(); toggleFavorite(row.ticker); }}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: isInAnyList(row.ticker) ? C.yellow : "#444", fontSize: 13, padding: 0, lineHeight: 1 }}>★</button>
+                      style={{ background: "none", border: "none", cursor: "pointer", color: isInAnyList(row.ticker) ? TH.yellow : "#444", fontSize: 13, padding: 0, lineHeight: 1 }}>★</button>
                   </td>
                   <td style={{ ...tdStyle, ...stickyTickerTd(rowBg) }}>
-                    <span style={{ padding: "1px 5px", borderRadius: 10, background: C.surfaceHighest, color: "#fff", fontWeight: 700, fontSize: 11 }}>{row.ticker}</span>
+                    <span style={{ padding: "1px 5px", borderRadius: 10, background: TH.surfaceHighest, color: "#fff", fontWeight: 700, fontSize: 11 }}>{row.ticker}</span>
                   </td>
                   </>); })()}
                   <td style={{ ...tdStyle, fontWeight: 600 }}>${row.price?.toFixed(2)}</td>
                   <td style={tdStyle}>
-                    <span style={{ padding: "1px 5px", borderRadius: 4, background: `${TPR_COLOR[row.tpr] ?? "#666"}33`, color: TPR_COLOR[row.tpr] ?? C.textDim, fontWeight: 700, fontSize: 10 }}>{row.tpr}</span>
+                    <span style={{ padding: "1px 5px", borderRadius: 4, background: `${TPR_COLOR[row.tpr] ?? "#666"}33`, color: TPR_COLOR[row.tpr] ?? TH.textDim, fontWeight: 700, fontSize: 10 }}>{row.tpr}</span>
                   </td>
-                  <td style={{ ...tdStyle, fontWeight: 600, color: (row.rpr ?? 0) >= 70 ? C.green : C.text }}>{row.rpr?.toFixed(0)}</td>
-                  <td style={{ ...tdStyle, fontWeight: 600, color: (row.rsVsSpy ?? 50) >= 60 ? C.green : (row.rsVsSpy ?? 50) <= 40 ? C.red : C.textDim }}>
-                    {row.rsVsSpy ?? "-"}{row.rsMakingHigh && <span style={{ marginLeft: 2, fontSize: 9, color: C.green }}>▲</span>}
+                  <td style={{ ...tdStyle, fontWeight: 600, color: (row.rpr ?? 0) >= 70 ? TH.green : TH.text }}>{row.rpr?.toFixed(0)}</td>
+                  <td style={{ ...tdStyle, fontWeight: 600, color: (row.rsVsSpy ?? 50) >= 60 ? TH.green : (row.rsVsSpy ?? 50) <= 40 ? TH.red : TH.textDim }}>
+                    {row.rsVsSpy ?? "-"}{row.rsMakingHigh && <span style={{ marginLeft: 2, fontSize: 9, color: TH.green }}>▲</span>}
                   </td>
-                  <td style={{ ...tdStyle, color: (row.rs12m ?? 0) >= 0 ? C.green : C.red, fontWeight: 600 }}>
+                  <td style={{ ...tdStyle, color: (row.rs12m ?? 0) >= 0 ? TH.green : TH.red, fontWeight: 600 }}>
                     {row.rs12m != null ? `${row.rs12m >= 0 ? "+" : ""}${row.rs12m.toFixed(1)}%` : "-"}
                   </td>
                   <td style={tdStyle}><VcpBar score={row.vcpScore ?? 0} /></td>
@@ -1094,37 +1094,37 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
                     <span style={{
                       display: "inline-block", width: 22, height: 22, lineHeight: "22px", textAlign: "center",
                       borderRadius: "50%", fontSize: 10, fontWeight: 800,
-                      background: row.passCount >= 7 ? C.green : row.passCount >= 4 ? C.yellow : row.passCount >= 2 ? C.orange : "#333",
-                      color: row.passCount >= 2 ? "#000" : C.textDim,
+                      background: row.passCount >= 7 ? TH.green : row.passCount >= 4 ? TH.yellow : row.passCount >= 2 ? TH.orange : "#333",
+                      color: row.passCount >= 2 ? "#000" : TH.textDim,
                     }}>{row.passCount}</span>
                   </td>
-                  <td style={{ ...tdStyle, color: (row.epsThisY ?? 0) >= 20 ? C.green : (row.epsThisY ?? 0) < 0 ? C.red : C.text, fontWeight: 700, fontSize: 10 }}>
+                  <td style={{ ...tdStyle, color: (row.epsThisY ?? 0) >= 20 ? TH.green : (row.epsThisY ?? 0) < 0 ? TH.red : TH.text, fontWeight: 700, fontSize: 10 }}>
                     {row.epsThisY != null ? `${row.epsThisY >= 0 ? "+" : ""}${row.epsThisY.toFixed(0)}%` : "-"}
                   </td>
-                  <td style={{ ...tdStyle, color: (row.salesQQ ?? 0) >= 10 ? C.green : (row.salesQQ ?? 0) < 0 ? C.red : C.text, fontWeight: 600, fontSize: 10 }}>
+                  <td style={{ ...tdStyle, color: (row.salesQQ ?? 0) >= 10 ? TH.green : (row.salesQQ ?? 0) < 0 ? TH.red : TH.text, fontWeight: 600, fontSize: 10 }}>
                     {row.salesQQ != null ? `${row.salesQQ >= 0 ? "+" : ""}${row.salesQQ.toFixed(0)}%` : "-"}
                   </td>
                   <td style={{ ...tdStyle, textAlign: "center", fontSize: 11, fontWeight: 700 }}>
                     {row.instTrans != null
-                      ? <span style={{ color: row.instTrans > 0 ? C.green : row.instTrans < 0 ? C.red : C.textDim }}>
+                      ? <span style={{ color: row.instTrans > 0 ? TH.green : row.instTrans < 0 ? TH.red : TH.textDim }}>
                           {row.instTrans > 0 ? "▲" : row.instTrans < 0 ? "▼" : "─"}{Math.abs(row.instTrans).toFixed(1)}%
                         </span>
                       : <span style={{ color: "#444" }}>-</span>}
                   </td>
-                  <td style={{ ...tdStyle, fontSize: 10, color: row.pe != null && row.pe < 20 ? C.green : C.textDim }}>{row.pe != null ? row.pe.toFixed(1) : "-"}</td>
-                  <td style={{ ...tdStyle, fontSize: 10, color: row.fpe != null && row.fpe < 20 ? C.green : C.textDim }}>{row.fpe != null ? row.fpe.toFixed(1) : "-"}</td>
-                  <td style={{ ...tdStyle, color: (row.epsNextY ?? 0) >= 10 ? C.green : (row.epsNextY ?? 0) < 0 ? C.red : C.text, fontWeight: 600, fontSize: 10 }}>
+                  <td style={{ ...tdStyle, fontSize: 10, color: row.pe != null && row.pe < 20 ? TH.green : TH.textDim }}>{row.pe != null ? row.pe.toFixed(1) : "-"}</td>
+                  <td style={{ ...tdStyle, fontSize: 10, color: row.fpe != null && row.fpe < 20 ? TH.green : TH.textDim }}>{row.fpe != null ? row.fpe.toFixed(1) : "-"}</td>
+                  <td style={{ ...tdStyle, color: (row.epsNextY ?? 0) >= 10 ? TH.green : (row.epsNextY ?? 0) < 0 ? TH.red : TH.text, fontWeight: 600, fontSize: 10 }}>
                     {row.epsNextY != null ? `${row.epsNextY >= 0 ? "+" : ""}${row.epsNextY.toFixed(0)}%` : "-"}
                   </td>
-                  <td style={{ ...tdStyle, color: (row.eps5Y ?? 0) >= 10 ? C.green : (row.eps5Y ?? 0) < 0 ? C.red : C.text, fontWeight: 600, fontSize: 10 }}>
+                  <td style={{ ...tdStyle, color: (row.eps5Y ?? 0) >= 10 ? TH.green : (row.eps5Y ?? 0) < 0 ? TH.red : TH.text, fontWeight: 600, fontSize: 10 }}>
                     {row.eps5Y != null ? `${row.eps5Y >= 0 ? "+" : ""}${row.eps5Y.toFixed(0)}%` : "-"}
                   </td>
-                  <td style={{ ...tdStyle, color: (row.roe ?? 0) >= 15 ? C.green : C.textDim, fontWeight: 600, fontSize: 10 }}>
+                  <td style={{ ...tdStyle, color: (row.roe ?? 0) >= 15 ? TH.green : TH.textDim, fontWeight: 600, fontSize: 10 }}>
                     {row.roe != null ? `${row.roe.toFixed(0)}%` : "-"}
                   </td>
                   {ALL_SCREEN_KEYS.map(k => (
                     <td key={k} style={{ ...tdStyle, textAlign: "center", fontSize: 13 }}>
-                      {row[k] ? <span style={{ color: C.green, fontWeight: 800 }}>✓</span> : <span style={{ color: "#2a2a2a" }}>·</span>}
+                      {row[k] ? <span style={{ color: TH.green, fontWeight: 800 }}>✓</span> : <span style={{ color: "#2a2a2a" }}>·</span>}
                     </td>
                   ))}
                 </tr>
@@ -1132,7 +1132,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
             </tbody>
           </table>
           {results.length === 0 && !running && (
-            <div style={{ padding: 40, textAlign: "center", color: C.textDim, fontSize: 13 }}>
+            <div style={{ padding: 40, textAlign: "center", color: TH.textDim, fontSize: 13 }}>
               ▶ 실행 버튼을 눌러 스크리닝을 시작하세요
               <div style={{ marginTop: 8, fontSize: 10, color: "#555" }}>
                 Trend Template · VCP · RS vs SPY · 포켓피봇 · 돌파임박 · 펀더멘탈
@@ -1145,11 +1145,11 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
       {/* ── Right: TradingView chart ── */}
       {chartTicker && showChart && (
         <div style={{ width: 1040, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ padding: "8px 12px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontWeight: 700, fontSize: 14 }}>{chartTicker}</span>
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => setShowChart(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14 }} title="차트 접기">◀</button>
-              <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
+              <button onClick={() => setShowChart(false)} style={{ background: "none", border: "none", color: TH.textDim, cursor: "pointer", fontSize: 14 }} title="차트 접기">◀</button>
+              <button onClick={() => setChartTicker(null)} style={{ background: "none", border: "none", color: TH.textDim, cursor: "pointer", fontSize: 16 }}>✕</button>
             </div>
           </div>
           <TradingViewChart ticker={chartTicker} />
@@ -1345,12 +1345,12 @@ export default function Dashboard() {
     }
   }, [selected]);
 
-  const btnStyle = (active, color = C.primary) => ({
+  const btnStyle = (active, color = TH.primary) => ({
     fontFamily: "'Inter', sans-serif", padding: "6px 14px", fontSize: 11, fontWeight: 700,
     letterSpacing: "0.05em", textTransform: "uppercase",
-    border: `1px solid ${active ? color : C.outlineVar}`, borderRadius: 4,
+    border: `1px solid ${active ? color : TH.outlineVar}`, borderRadius: 4,
     background: active ? `${color}18` : "transparent",
-    color: active ? color : C.textDim, cursor: "pointer", transition: "all 0.15s",
+    color: active ? color : TH.textDim, cursor: "pointer", transition: "all 0.15s",
   });
 
   // 티커 검색 (관심종목 탭에서)
@@ -1395,40 +1395,40 @@ export default function Dashboard() {
 
   return (
     <>
-    <div style={{ fontFamily: "'Inter', Arial, sans-serif", background: C.bg, color: C.text, height: "100vh", margin: 0, overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Inter', Arial, sans-serif", background: TH.bg, color: TH.text, height: "100vh", margin: 0, overflow: "hidden" }}>
       {/* ═══ TOP NAV BAR ═══ */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, height: 52, background: C.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", zIndex: 1000 }}>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, height: 52, background: TH.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${TH.borderLight}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", zIndex: 1000 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.05em", color: C.primary }}>US.MARKET</span>
+          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.05em", color: TH.primary }}>US.MARKET</span>
           <div style={{ display: "flex", alignItems: "center", height: 52 }}>
             {[
               ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
               ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"],
             ].map(([id, label]) => (
               <button key={id} onClick={() => setViewMode(id)}
-                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 17, height: 52, padding: "0 16px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${C.primary}` : "2px solid transparent", color: viewMode === id ? C.primary : C.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
-                {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: C.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
+                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 17, height: 52, padding: "0 16px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${TH.primary}` : "2px solid transparent", color: viewMode === id ? TH.primary : TH.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
+                {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: TH.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
               </button>
             ))}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {[
-            ["TOTAL", stats.total, C.textBright], ["BUY", stats.buy, C.primary], ["SELL", stats.sell, C.secondary], ["A", stats.gradeA, C.primary], ["C", stats.gradeC, C.tertiary],
+            ["TOTAL", stats.total, TH.textBright], ["BUY", stats.buy, TH.primary], ["SELL", stats.sell, TH.secondary], ["A", stats.gradeA, TH.primary], ["C", stats.gradeC, TH.tertiary],
           ].map(([label, val, color]) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3px 10px", borderRadius: 6, background: C.surface }}>
-              <span style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
+            <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3px 10px", borderRadius: 6, background: TH.surface }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: TH.textDim, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color }}>{val}</span>
             </div>
           ))}
-          {lastUpdated && <span style={{ fontSize: 10, color: C.textDim, marginLeft: 4 }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>}
+          {lastUpdated && <span style={{ fontSize: 10, color: TH.textDim, marginLeft: 4 }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>}
         </div>
       </nav>
 
       {/* ═══ MAIN CONTENT (no sidebar - removed per user feedback) ═══ */}
     <div style={{ paddingTop: 52, display: "flex", height: "100vh", overflow: "hidden" }}>
       {loading && data && (
-        <div style={{ position: "fixed", top: 8, right: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px", fontSize: 11, color: C.textDim, zIndex: 50 }}>
+        <div style={{ position: "fixed", top: 8, right: 8, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, padding: "4px 10px", fontSize: 11, color: TH.textDim, zIndex: 50 }}>
           🔄 갱신 중...
         </div>
       )}
@@ -1439,16 +1439,16 @@ export default function Dashboard() {
       )}
 
       {/* ═══ LEFT PANEL ═══ */}
-      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${C.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Header - Sub controls */}
-        <div style={{ padding: "8px 10px", background: C.surfaceAlt, borderBottom: `1px solid ${C.outlineVar}`, flexShrink: 0 }}>
+        <div style={{ padding: "8px 10px", background: TH.surfaceAlt, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>
           {(viewMode === "combined" || viewMode === "flow") && (
             <div style={{ display: "flex", gap: 4 }}>
               <button style={btnStyle(flowFilter === "all", "#888")} onClick={() => setFlowFilter("all")}>전체</button>
-              <button style={btnStyle(flowFilter === "buy", C.green)} onClick={() => setFlowFilter("buy")}>매수시그널</button>
-              <button style={btnStyle(flowFilter === "sell", C.red)} onClick={() => setFlowFilter("sell")}>매도시그널</button>
-              <button style={btnStyle(flowFilter === "accum", C.blue)} onClick={() => setFlowFilter("accum")}>매집중</button>
-              <button style={btnStyle(flowFilter === "turnover", C.yellow)} onClick={() => setFlowFilter("turnover")}>손바뀜</button>
+              <button style={btnStyle(flowFilter === "buy", TH.green)} onClick={() => setFlowFilter("buy")}>매수시그널</button>
+              <button style={btnStyle(flowFilter === "sell", TH.red)} onClick={() => setFlowFilter("sell")}>매도시그널</button>
+              <button style={btnStyle(flowFilter === "accum", TH.blue)} onClick={() => setFlowFilter("accum")}>매집중</button>
+              <button style={btnStyle(flowFilter === "turnover", TH.yellow)} onClick={() => setFlowFilter("turnover")}>손바뀜</button>
             </div>
           )}
           {viewMode === "watchlist" && (
@@ -1458,12 +1458,12 @@ export default function Dashboard() {
                 onChange={e => setWatchlistSearch(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch(watchlistSearch)}
                 placeholder="티커 검색 (예: AAPL, TSLA, 005930.KS)"
-                style={{ flex: 1, padding: "4px 10px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 12, outline: "none" }}
+                style={{ flex: 1, padding: "4px 10px", background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 4, color: TH.text, fontSize: 12, outline: "none" }}
               />
               <button
                 onClick={() => handleSearch(watchlistSearch)}
                 disabled={searchLoading}
-                style={{ ...btnStyle(true, C.blue), padding: "4px 12px" }}
+                style={{ ...btnStyle(true, TH.blue), padding: "4px 12px" }}
               >
                 {searchLoading ? "검색 중..." : "검색"}
               </button>
@@ -1478,14 +1478,14 @@ export default function Dashboard() {
           {viewMode === "watchlist" && (
             <div>
               {/* 목록 탭 바 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 8px", background: "#111", borderBottom: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 8px", background: "#111", borderBottom: `1px solid ${TH.border}`, flexWrap: "wrap" }}>
                 {lists.map((list, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center" }}>
                     <button
                       onClick={() => setActiveIdx(i)}
                       onDoubleClick={() => { const n = prompt("목록 이름 변경", list.name); if (n?.trim()) renameList(i, n.trim()); }}
                       title="더블클릭으로 이름 변경"
-                      style={{ padding: "3px 10px", fontSize: 11, border: "none", borderRadius: 4, background: activeIdx === i ? C.yellow : "#2d3748", color: activeIdx === i ? "#000" : C.textDim, cursor: "pointer", fontWeight: activeIdx === i ? 700 : 400 }}
+                      style={{ padding: "3px 10px", fontSize: 11, border: "none", borderRadius: 4, background: activeIdx === i ? TH.yellow : "#2d3748", color: activeIdx === i ? "#000" : TH.textDim, cursor: "pointer", fontWeight: activeIdx === i ? 700 : 400 }}
                     >
                       {list.name} <span style={{ fontSize: 10, opacity: 0.8 }}>({list.tickers.length})</span>
                     </button>
@@ -1500,7 +1500,7 @@ export default function Dashboard() {
                 ))}
                 <button
                   onClick={() => { const n = prompt("새 목록 이름", "새 관심목록"); if (n?.trim()) addList(n.trim()); }}
-                  style={{ padding: "3px 8px", fontSize: 11, border: `1px dashed ${C.border}`, borderRadius: 4, background: "none", color: C.textDim, cursor: "pointer" }}
+                  style={{ padding: "3px 8px", fontSize: 11, border: `1px dashed ${TH.border}`, borderRadius: 4, background: "none", color: TH.textDim, cursor: "pointer" }}
                 >+ 새 목록</button>
               </div>
 
@@ -1510,7 +1510,7 @@ export default function Dashboard() {
                 </div>
               )}
               {favorites.length === 0 && !searchResult && (
-                <div style={{ padding: 40, textAlign: "center", color: C.textDim, fontSize: 13 }}>
+                <div style={{ padding: 40, textAlign: "center", color: TH.textDim, fontSize: 13 }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>★</div>
                   <div>"{lists[activeIdx]?.name}" 목록이 비어 있습니다.</div>
                   <div style={{ fontSize: 11, marginTop: 6 }}>메인 목록에서 우클릭 또는 ★ 버튼으로 추가하세요.</div>
@@ -1518,7 +1518,7 @@ export default function Dashboard() {
               )}
               {favorites.length > 0 && (
                 <div>
-                  <div style={{ padding: "6px 10px", background: C.surface, fontWeight: 700, fontSize: 12, borderBottom: `1px solid ${C.border}`, color: C.yellow }}>★ {lists[activeIdx]?.name} ({favorites.length})</div>
+                  <div style={{ padding: "6px 10px", background: TH.surface, fontWeight: 700, fontSize: 12, borderBottom: `1px solid ${TH.border}`, color: TH.yellow }}>★ {lists[activeIdx]?.name} ({favorites.length})</div>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
                       <tr>
@@ -1540,16 +1540,16 @@ export default function Dashboard() {
                         const row = (data ? Object.values(data).flat().find(r => r.ticker === fav) : null)
                           || customFavData[fav];
                         if (!row) return (
-                          <tr key={fav} style={{ backgroundColor: i % 2 === 0 ? C.bg : "transparent" }}>
-                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
-                            <td style={{ ...tdStyle, color: C.textDim, fontSize: 11 }} colSpan={7}>⏳ 데이터 로딩 중...</td>
-                            <td style={tdStyle}><button onClick={() => toggleFavorite(fav)} style={{ background: "none", border: "none", cursor: "pointer", color: C.yellow, fontSize: 16 }}>★</button></td>
+                          <tr key={fav} style={{ backgroundColor: i % 2 === 0 ? TH.bg : "transparent" }}>
+                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
+                            <td style={{ ...tdStyle, color: TH.textDim, fontSize: 11 }} colSpan={7}>⏳ 데이터 로딩 중...</td>
+                            <td style={tdStyle}><button onClick={() => toggleFavorite(fav)} style={{ background: "none", border: "none", cursor: "pointer", color: TH.yellow, fontSize: 16 }}>★</button></td>
                           </tr>
                         );
                         const isActive = selected?.ticker === fav;
                         return (
-                          <tr key={fav} onClick={() => handleSelectRow(row)} style={{ cursor: "pointer", backgroundColor: isActive ? C.surfaceHigh : i % 2 === 0 ? C.bg : "transparent" }}>
-                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: C.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
+                          <tr key={fav} onClick={() => handleSelectRow(row)} style={{ cursor: "pointer", backgroundColor: isActive ? TH.surfaceHigh : i % 2 === 0 ? TH.bg : "transparent" }}>
+                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
                             <td style={tdStyle}><ABCBadge grade={row.abc} /></td>
                             <ValueBar value={row.daily} min={-5} max={5} />
                             <ValueBar value={row["5d"]} min={-10} max={10} />
@@ -1559,7 +1559,7 @@ export default function Dashboard() {
                             <td style={tdStyle}><ScoreCell score={row.score} /></td>
                             <td style={tdStyle}><SignalBadge signal={row.signal} compact /></td>
                             <td style={tdStyle}>
-                              <button onClick={e => { e.stopPropagation(); toggleFavorite(fav); }} style={{ background: "none", border: "none", cursor: "pointer", color: C.yellow, fontSize: 16 }}>★</button>
+                              <button onClick={e => { e.stopPropagation(); toggleFavorite(fav); }} style={{ background: "none", border: "none", cursor: "pointer", color: TH.yellow, fontSize: 16 }}>★</button>
                             </td>
                           </tr>
                         );
@@ -1588,10 +1588,10 @@ export default function Dashboard() {
           {/* ── 미주모 뷰 ── */}
           {viewMode === "mijoomo" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#111", minHeight: 0 }}>
-              <div style={{ padding: "6px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                <span style={{ fontSize: 12, color: C.textDim }}>🌐 미주모 (mijoomo.com)</span>
+              <div style={{ padding: "6px 12px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: TH.textDim }}>🌐 미주모 (mijoomo.com)</span>
                 <a href="http://www.mijoomo.com/" target="_blank" rel="noreferrer"
-                  style={{ fontSize: 11, color: C.teal, textDecoration: "none", padding: "2px 8px", border: `1px solid ${C.teal}`, borderRadius: 4 }}>
+                  style={{ fontSize: 11, color: TH.teal, textDecoration: "none", padding: "2px 8px", border: `1px solid ${TH.teal}`, borderRadius: 4 }}>
                   새 탭으로 열기 ↗
                 </a>
                 <a href="https://www.patreon.com/mijoomo" target="_blank" rel="noreferrer"
@@ -1611,7 +1611,7 @@ export default function Dashboard() {
 
           {/* ── 메인 테이블 뷰 (Stitch Design) ── */}
           {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && data && (
-            <UnifiedTable C={C} data={data} viewMode={viewMode} collapsed={collapsed} setCollapsed={setCollapsed}
+            <UnifiedTable C={TH} data={data} viewMode={viewMode} collapsed={collapsed} setCollapsed={setCollapsed}
               sortStates={sortStates} handleSort={handleSort} getSortIndicator={getSortIndicator}
               filterRows={filterRows} getSortedRows={getSortedRows} selected={selected} handleSelectRow={handleSelectRow}
               toggleFavorite={toggleFavorite} isInAnyList={isInAnyList} isFavorite={isFavorite}
@@ -1619,7 +1619,7 @@ export default function Dashboard() {
               VARSChart={VARSChart} ValueBar={ValueBar} ABCBadge={ABCBadge} ScoreCell={ScoreCell} SignalBadge={SignalBadge} />
           )}
           {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && (
-            <div style={{ fontSize: 10, color: C.textDim, padding: "8px 16px", background: C.surfaceAlt, position: "sticky", bottom: 0, borderTop: `1px solid ${C.outlineVar}`, fontFamily: "'Inter', sans-serif", letterSpacing: "0.05em" }}>
+            <div style={{ fontSize: 10, color: TH.textDim, padding: "8px 16px", background: TH.surfaceAlt, position: "sticky", bottom: 0, borderTop: `1px solid ${TH.outlineVar}`, fontFamily: "'Inter', sans-serif", letterSpacing: "0.05em" }}>
               ↑ ↓ Navigate · Real-time Data: Yahoo Finance API · 5min Cache
             </div>
           )}
@@ -1627,29 +1627,29 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: detailFullscreen ? undefined : 480, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${C.outlineVar}`, background: C.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: detailFullscreen ? undefined : 480, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
           <>
             {/* Header with close + fullscreen */}
-            <div style={{ padding: "12px 16px", background: C.surface, borderBottom: `1px solid ${C.outlineVar}`, flexShrink: 0 }}>
+            <div style={{ padding: "12px 16px", background: TH.surface, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: C.textBright, letterSpacing: "-0.02em" }}>{selected.ticker}</div>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: TH.textBright, letterSpacing: "-0.02em" }}>{selected.ticker}</div>
                     <span className="material-symbols-outlined"
                       onClick={() => toggleFavorite(selected.ticker)}
-                      style={{ fontSize: 20, color: isFavorite(selected.ticker) ? "#f59e0b" : C.outline, cursor: "pointer", fontVariationSettings: isFavorite(selected.ticker) ? "'FILL' 1" : "'FILL' 0" }}>star</span>
+                      style={{ fontSize: 20, color: isFavorite(selected.ticker) ? "#f59e0b" : TH.outline, cursor: "pointer", fontVariationSettings: isFavorite(selected.ticker) ? "'FILL' 1" : "'FILL' 0" }}>star</span>
                   </div>
-                  <div style={{ fontSize: 10, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>
+                  <div style={{ fontSize: 10, color: TH.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>
                     {selected.sector}
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <span className="material-symbols-outlined" onClick={() => setDetailFullscreen(f => !f)} style={{ fontSize: 18, color: detailFullscreen ? C.primary : C.textDim, cursor: "pointer" }} title={detailFullscreen ? "축소" : "전체보기"}>{detailFullscreen ? "fullscreen_exit" : "fullscreen"}</span>
-                    <span className="material-symbols-outlined" onClick={() => { setSelected(null); setDetailFullscreen(false); }} style={{ fontSize: 18, color: C.textDim, cursor: "pointer" }} title="닫기">close</span>
+                    <span className="material-symbols-outlined" onClick={() => setDetailFullscreen(f => !f)} style={{ fontSize: 18, color: detailFullscreen ? TH.primary : TH.textDim, cursor: "pointer" }} title={detailFullscreen ? "축소" : "전체보기"}>{detailFullscreen ? "fullscreen_exit" : "fullscreen"}</span>
+                    <span className="material-symbols-outlined" onClick={() => { setSelected(null); setDetailFullscreen(false); }} style={{ fontSize: 18, color: TH.textDim, cursor: "pointer" }} title="닫기">close</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: C.primary, fontFamily: "monospace" }}>${selected.price?.toFixed(2)}</div>
-                  <div style={{ fontSize: 10, color: selected.daily >= 0 ? C.primary : C.secondary, fontWeight: 700 }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: TH.primary, fontFamily: "monospace" }}>${selected.price?.toFixed(2)}</div>
+                  <div style={{ fontSize: 10, color: selected.daily >= 0 ? TH.primary : TH.secondary, fontWeight: 700 }}>
                     {selected.daily >= 0 ? "+" : ""}{selected.daily?.toFixed(2)}%
                   </div>
                 </div>
@@ -1663,20 +1663,20 @@ export default function Dashboard() {
 
             {/* Indicators - single horizontal row below chart */}
             {selectedIndicators && (
-            <div style={{ display: "flex", gap: 3, padding: "6px 8px", background: C.surface, borderTop: `1px solid ${C.outlineVar}`, flexShrink: 0, overflowX: "auto", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 3, padding: "6px 8px", background: TH.surface, borderTop: `1px solid ${TH.outlineVar}`, flexShrink: 0, overflowX: "auto", flexWrap: "wrap" }}>
               {[
-                { label: "RSI", value: selectedIndicators.rsi?.toFixed(0) ?? "-", color: (selectedIndicators.rsi ?? 50) > 70 ? C.secondary : (selectedIndicators.rsi ?? 50) < 30 ? C.primary : C.tertiary },
-                { label: "MFI", value: selectedIndicators.mfi?.toFixed(0) ?? "-", color: C.text },
-                { label: "OBV", value: (selectedIndicators.obv ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.obv ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "VOL", value: `${((selectedIndicators.volRatio ?? 100) / 100).toFixed(1)}x`, color: C.text },
-                { label: "MACD", value: (selectedIndicators.macdHist ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.macdHist ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "BB", value: `${selectedIndicators.bbPos ?? 50}%`, color: C.tertiary },
-                { label: "SMA", value: `${(selectedIndicators.sma200Dev ?? 0).toFixed(0)}%`, color: (selectedIndicators.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "GRD", value: selected.abc || "-", color: { "A": C.primary, "B": C.tertiary, "C": C.secondary }[selected.abc] || C.textDim },
-                { label: "FLOW", value: selected.score > 0 ? `+${selected.score}` : `${selected.score}`, color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
+                { label: "RSI", value: selectedIndicators.rsi?.toFixed(0) ?? "-", color: (selectedIndicators.rsi ?? 50) > 70 ? TH.secondary : (selectedIndicators.rsi ?? 50) < 30 ? TH.primary : TH.tertiary },
+                { label: "MFI", value: selectedIndicators.mfi?.toFixed(0) ?? "-", color: TH.text },
+                { label: "OBV", value: (selectedIndicators.obv ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.obv ?? 0) > 0 ? TH.primary : TH.secondary },
+                { label: "VOL", value: `${((selectedIndicators.volRatio ?? 100) / 100).toFixed(1)}x`, color: TH.text },
+                { label: "MACD", value: (selectedIndicators.macdHist ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.macdHist ?? 0) > 0 ? TH.primary : TH.secondary },
+                { label: "BB", value: `${selectedIndicators.bbPos ?? 50}%`, color: TH.tertiary },
+                { label: "SMA", value: `${(selectedIndicators.sma200Dev ?? 0).toFixed(0)}%`, color: (selectedIndicators.sma200Dev ?? 0) > 0 ? TH.primary : TH.secondary },
+                { label: "GRD", value: selected.abc || "-", color: { "A": TH.primary, "B": TH.tertiary, "C": TH.secondary }[selected.abc] || TH.textDim },
+                { label: "FLOW", value: selected.score > 0 ? `+${selected.score}` : `${selected.score}`, color: selected.score > 30 ? TH.primary : selected.score < -30 ? TH.secondary : TH.tertiary },
               ].map(({ label, value, color }, i) => (
-                <div key={i} style={{ padding: "4px 8px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 3, textAlign: "center", minWidth: 40, flexShrink: 0 }}>
-                  <div style={{ fontSize: 10, color: C.textDim, fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
+                <div key={i} style={{ padding: "4px 8px", background: TH.surfaceHigh, border: `1px solid ${TH.outlineVar}`, borderRadius: 3, textAlign: "center", minWidth: 40, flexShrink: 0 }}>
+                  <div style={{ fontSize: 10, color: TH.textDim, fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
                   <div style={{ fontSize: 13, fontWeight: 900, color }}>{value}</div>
                 </div>
               ))}
@@ -1690,9 +1690,9 @@ export default function Dashboard() {
     {contextMenu && (
       <div
         onClick={e => e.stopPropagation()}
-        style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, zIndex: 9999, minWidth: 170, boxShadow: "0 6px 24px #000c", overflow: "hidden" }}
+        style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, zIndex: 9999, minWidth: 170, boxShadow: "0 6px 24px #000c", overflow: "hidden" }}
       >
-        <div style={{ padding: "6px 12px", fontSize: 12, fontWeight: 700, color: C.yellow, borderBottom: `1px solid ${C.border}`, background: C.surface }}>
+        <div style={{ padding: "6px 12px", fontSize: 12, fontWeight: 700, color: TH.yellow, borderBottom: `1px solid ${TH.border}`, background: TH.surface }}>
           {contextMenu.ticker}
         </div>
         {lists.map((list, i) => {
@@ -1701,8 +1701,8 @@ export default function Dashboard() {
             <div
               key={i}
               onClick={() => { inList ? removeFromList(contextMenu.ticker, i) : addToList(contextMenu.ticker, i); setContextMenu(null); }}
-              style={{ padding: "7px 14px", fontSize: 12, cursor: "pointer", color: inList ? C.yellow : C.text, display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid #333` }}
-              onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh}
+              style={{ padding: "7px 14px", fontSize: 12, cursor: "pointer", color: inList ? TH.yellow : TH.text, display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid #333` }}
+              onMouseEnter={e => e.currentTarget.style.background = TH.surfaceHigh}
               onMouseLeave={e => e.currentTarget.style.background = ""}
             >
               <span style={{ fontSize: 14 }}>{inList ? "★" : "☆"}</span>
@@ -1713,8 +1713,8 @@ export default function Dashboard() {
         })}
         <div
           onClick={() => { const n = prompt("새 목록 이름", "새 관심목록"); if (n) { addList(n); } setContextMenu(null); }}
-          style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: C.textDim, borderTop: `1px solid ${C.border}` }}
-          onMouseEnter={e => e.currentTarget.style.background = C.surfaceHigh}
+          style={{ padding: "7px 14px", fontSize: 11, cursor: "pointer", color: TH.textDim, borderTop: `1px solid ${TH.border}` }}
+          onMouseEnter={e => e.currentTarget.style.background = TH.surfaceHigh}
           onMouseLeave={e => e.currentTarget.style.background = ""}
         >
           + 새 목록에 추가

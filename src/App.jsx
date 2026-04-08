@@ -1646,105 +1646,30 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* TradingView 차트 - fills remaining space */}
-            <div style={{ flex: 1, minHeight: 0 }}>
+            {/* TradingView 차트 - fills all remaining space */}
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
               <TradingViewChart ticker={selected.ticker} />
             </div>
 
-            {/* Indicators - single horizontal row */}
-            <div style={{ display: "flex", gap: 2, padding: "6px 8px", background: C.surface, borderTop: `1px solid ${C.outlineVar}`, flexShrink: 0, overflowX: "auto" }}>
-              {[
-                { label: "RSI", value: selectedIndicators?.rsi?.toFixed(0) ?? "-", color: (selectedIndicators?.rsi ?? 50) > 70 ? C.secondary : (selectedIndicators?.rsi ?? 50) < 30 ? C.primary : C.tertiary },
-                { label: "MFI", value: selectedIndicators?.mfi?.toFixed(0) ?? "-", color: (selectedIndicators?.mfi ?? 50) > 80 ? C.secondary : C.text },
-                { label: "OBV", value: (selectedIndicators?.obv ?? 0) > 0 ? "+" : "-", color: (selectedIndicators?.obv ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "VOL", value: `${((selectedIndicators?.volRatio ?? 100) / 100).toFixed(1)}x`, color: (selectedIndicators?.volRatio ?? 100) > 200 ? C.primary : C.text },
-                { label: "MACD", value: (selectedIndicators?.macdHist ?? 0) > 0 ? "+" : "-", color: (selectedIndicators?.macdHist ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "BB", value: `${selectedIndicators?.bbPos ?? 50}%`, color: C.tertiary },
-                { label: "SMA", value: `${(selectedIndicators?.sma200Dev ?? 0).toFixed(0)}%`, color: (selectedIndicators?.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
-                { label: "SI", value: selectedIndicators?.shortInt != null ? `${selectedIndicators.shortInt}%` : "-", color: C.text },
+            {/* Indicators - single horizontal row below chart */}
+            <div style={{ display: "flex", gap: 2, padding: "4px 6px", background: C.surface, borderTop: `1px solid ${C.outlineVar}`, flexShrink: 0, overflowX: "auto" }}>
+              {selectedIndicators && [
+                { label: "RSI", value: selectedIndicators.rsi?.toFixed(0) ?? "-", color: (selectedIndicators.rsi ?? 50) > 70 ? C.secondary : (selectedIndicators.rsi ?? 50) < 30 ? C.primary : C.tertiary },
+                { label: "MFI", value: selectedIndicators.mfi?.toFixed(0) ?? "-", color: C.text },
+                { label: "OBV", value: (selectedIndicators.obv ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.obv ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "VOL", value: `${((selectedIndicators.volRatio ?? 100) / 100).toFixed(1)}x`, color: C.text },
+                { label: "MACD", value: (selectedIndicators.macdHist ?? 0) > 0 ? "+" : "-", color: (selectedIndicators.macdHist ?? 0) > 0 ? C.primary : C.secondary },
+                { label: "BB", value: `${selectedIndicators.bbPos ?? 50}%`, color: C.tertiary },
+                { label: "SMA", value: `${(selectedIndicators.sma200Dev ?? 0).toFixed(0)}%`, color: (selectedIndicators.sma200Dev ?? 0) > 0 ? C.primary : C.secondary },
                 { label: "GRD", value: selected.abc || "-", color: { A: C.primary, B: C.tertiary, C: C.secondary }[selected.abc] || C.textDim },
-                { label: "ATR", value: selected.distSma50Atr?.toFixed(1) ?? "-", color: C.text },
-                { label: "RS", value: `${selected.rs ?? 50}%`, color: (selected.rs ?? 50) >= 50 ? C.primary : C.secondary },
                 { label: "FLOW", value: selected.score > 0 ? `+${selected.score}` : `${selected.score}`, color: selected.score > 30 ? C.primary : selected.score < -30 ? C.secondary : C.tertiary },
               ].map(({ label, value, color }, i) => (
-                <div key={i} style={{ padding: "3px 6px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 2, textAlign: "center", minWidth: 36, flexShrink: 0 }}>
+                <div key={i} style={{ padding: "2px 5px", background: C.surfaceHigh, border: `1px solid ${C.outlineVar}`, borderRadius: 2, textAlign: "center", minWidth: 32, flexShrink: 0 }}>
                   <div style={{ fontSize: 7, color: C.textDim, fontWeight: 700, textTransform: "uppercase" }}>{label}</div>
                   <div style={{ fontSize: 9, fontWeight: 900, color }}>{value}</div>
                 </div>
               ))}
             </div>
-
-            {/* 12지표 - compact version shown in Quick Stats above */}
-            <div style={{ display: "none", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 12 }}>
-              {selectedIndicators && [
-                { key: "sma200", name: "SMA200 이탈",      cat: "추세",     val: `${(selectedIndicators.sma200Dev ?? 0) > 0 ? "+" : ""}${selectedIndicators.sma200Dev ?? 0}%`,
-                  status: (selectedIndicators.sma200Dev ?? 0) < -10 ? "하방이탈" : (selectedIndicators.sma200Dev ?? 0) > 20 ? "과열" : "중립",
-                  calc: "(현재가 - 200일 단순이동평균) / SMA200 × 100%",
-                  meaning: "<-10% 하방: 역사적 저점권, 반등 기회\n>+20% 상방: 장기 과열, 평균회귀 경계\n0% 근처 = 장기 추세와 일치" },
-                { key: "macd",   name: "MACD 히스토그램", cat: "추세",     val: selectedIndicators.macdHist ?? 0,
-                  status: (selectedIndicators.macdHist ?? 0) > 0 ? "강세" : (selectedIndicators.macdHist ?? 0) < 0 ? "약세" : "중립",
-                  calc: "EMA(12) - EMA(26) = MACD선 / Signal = EMA9[MACD] / 히스토그램 = MACD - Signal",
-                  meaning: ">0 강세: 단기 모멘텀 상승 (MACD가 Signal 위)\n<0 약세: 단기 모멘텀 하락\n0 교차 = 추세 전환 신호" },
-                { key: "rsi",    name: "RSI(14)",          cat: "추세",     val: selectedIndicators.rsi,
-                  status: selectedIndicators.rsi < 30 ? "과매도" : selectedIndicators.rsi > 70 ? "과매수" : "중립",
-                  calc: "14일 평균상승 / (평균상승 + 평균하락) × 100",
-                  meaning: "<30 강한 과매도: 반등 기회 ↑\n<40 과매도권: 매수 검토\n>70 과매수: 매도 경계\n>75 강한 과매수: 단기 조정 주의" },
-                { key: "bbPos",  name: "BB 포지션",        cat: "추세",     val: `${selectedIndicators.bbPos}%`,
-                  status: selectedIndicators.bbPos < 20 ? "하단돌파" : selectedIndicators.bbPos > 80 ? "상단돌파" : "중립",
-                  calc: "(현재가 - 하단밴드) / (상단 - 하단밴드) × 100 / 밴드 = 20일 SMA ± 2σ",
-                  meaning: "<20% 하단: 평균회귀 매수 구간\n>80% 상단: 단기 과열, 조정 가능성\n50%=중간선 (20일 SMA)" },
-                { key: "obv",    name: "OBV 다이버전스",  cat: "수급",     val: selectedIndicators.obv,
-                  status: selectedIndicators.obv > 30 ? "매집" : selectedIndicators.obv < -30 ? "분산" : "중립",
-                  calc: "상승일 +거래량, 하락일 -거래량 누적 → 최근 5일 평균 vs 이전 5일 평균 차이",
-                  meaning: ">30 매집: 거래량이 상승을 뒷받침 (스마트머니 유입)\n<-30 분산: 거래량 하락 동반 (자금 이탈 신호)" },
-                { key: "mfi",    name: "MFI",             cat: "수급",     val: selectedIndicators.mfi,
-                  status: selectedIndicators.mfi < 20 ? "과매도" : selectedIndicators.mfi > 80 ? "과매수" : "중립",
-                  calc: "TP=(H+L+C)/3, 자금흐름=TP×Vol → 14일 양/음 자금비율 (거래량 가중 RSI)",
-                  meaning: "<20 과매도: 저점 반등 기회 ↑\n>80 과매수: 단기 조정 가능성 경고" },
-                { key: "vol",    name: "거래량 비율",      cat: "수급",     val: `${selectedIndicators.volRatio}%`,
-                  status: selectedIndicators.volRatio > 200 ? "급증" : selectedIndicators.volRatio < 40 ? "급감" : "보통",
-                  calc: "당일 거래량 / 최근 20일 평균 거래량 × 100%",
-                  meaning: ">200% 급증: 강한 추세 확인 신호\n<40% 급감: 관심 저하, 유동성 주의\n100% = 평균 수준" },
-                { key: "short",  name: "공매도 비율",      cat: "수급",     val: selectedIndicators.shortInt != null ? `${selectedIndicators.shortInt}%` : "N/A",
-                  status: selectedIndicators.shortInt == null ? "N/A" : selectedIndicators.shortInt > 15 ? "숏커버" : "보통",
-                  calc: "공매도 잔량 / 유통주식수 × 100 / 출처: Yahoo Finance defaultKeyStatistics",
-                  meaning: ">15% 숏커버: 숏스퀴즈 가능성 ↑ (강제 매수 잠재력)\n낮을수록: 매도 압력 적음\nN/A: ETF 등 데이터 미제공" },
-                { key: "breadth",name: "시장 광폭",        cat: "시장",     val: `${selectedIndicators.breadth}%`,
-                  status: selectedIndicators.breadth < 25 ? "과매도" : selectedIndicators.breadth > 75 ? "과매수" : "중립",
-                  calc: "S&P500 종목 중 50일 이동평균선 위에 있는 비율 / 출처: Yahoo Finance ^SPXA50R",
-                  meaning: "<25% 과매도: 시장 바닥권, 개별 반등 기회\n>75% 과매수: 시장 과열 경계\n50% 기준: 강세/약세 분기점" },
-              ].map((ind) => {
-                const bullish = ["매집", "과매도", "하방이탈", "하단돌파", "강세", "급증", "숏커버"].includes(ind.status);
-                const bearish = ["분산", "과매수", "상방이탈", "상단돌파", "약세", "급감", "과열"].includes(ind.status);
-                return <IndCard key={ind.key} ind={ind} bullish={bullish} bearish={bearish} />;
-              })}
-            </div>
-
-            {/* 매매 판단 요약 */}
-            <div style={{ padding: 12, background: selected.score >= 30 ? "#10b98112" : selected.score <= -30 ? "#ef444412" : C.surfaceHigh, borderRadius: 8, border: `1px solid ${selected.score >= 30 ? C.green + "44" : selected.score <= -30 ? C.red + "44" : C.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: selected.score >= 30 ? C.green : selected.score <= -30 ? C.red : C.blueLight, marginBottom: 6 }}>매매 판단 요약</div>
-              <div style={{ fontSize: 11, lineHeight: 1.7, color: C.text }}>
-                {selected.score >= 30 && selected.daily < 0 && <div>⚡ <b style={{ color: C.green }}>선행 매수 기회:</b> 수급 점수 +{selected.score}로 매수 시그널이지만 가격은 아직 {selected.daily}% 미반영 상태. 수급이 가격에 선행하고 있어 저가 매수 구간으로 판단.</div>}
-                {selected.score >= 30 && selected.daily >= 0 && <div>📈 <b style={{ color: C.green }}>수급 확인 매수:</b> 수급 점수 +{selected.score}과 가격 상승이 동행. 추세 확인 후 진입 적합.</div>}
-                {selected.score <= -30 && selected.daily > 0 && <div>⚠️ <b style={{ color: C.red }}>분산 경고:</b> 가격은 +{selected.daily}% 상승 중이나 수급 점수 {selected.score}로 스마트머니 이탈 감지. 차익실현 고려.</div>}
-                {selected.score <= -30 && selected.daily <= 0 && <div>🔻 <b style={{ color: C.red }}>매도 확인:</b> 수급과 가격 모두 하락 동행. 손절 또는 관망.</div>}
-                {selected.score > -30 && selected.score < 30 && <div>⏸️ <b>중립 구간:</b> 수급 점수 {selected.score}로 뚜렷한 방향성 부재. Grade {selected.abc}, ATRx {selected.distSma50Atr?.toFixed(2)} 기준으로 추세 전환 모니터링.</div>}
-                <div style={{ marginTop: 6, fontSize: 10, color: C.textDim }}>
-                  Grade {selected.abc} · VARS {selected.rs}% (SPY 대비 상대강도) · ATRx {selected.distSma50Atr?.toFixed(2)} · 실시간 Yahoo Finance 데이터
-                </div>
-              </div>
-            </div>
-
-            {/* LETF */}
-            {(selected.longETF?.length > 0 || selected.shortETF?.length > 0) && (
-              <div style={{ marginTop: 10, padding: 10, background: C.surface, borderRadius: 6, border: `1px solid ${C.borderLight}` }}>
-                <div style={{ fontSize: 10, color: C.textDim, marginBottom: 4 }}>LEVERAGED ETF</div>
-                <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
-                  {selected.longETF?.length > 0 && <span>LONG: {selected.longETF.map(e => <b key={e} style={{ color: C.greenBright, marginRight: 6 }}>{e}</b>)}</span>}
-                  {selected.shortETF?.length > 0 && <span>SHORT: {selected.shortETF.map(e => <b key={e} style={{ color: C.redBright, marginRight: 6 }}>{e}</b>)}</span>}
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>}

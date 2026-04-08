@@ -139,7 +139,7 @@ function TradingViewChart({ ticker }) {
       theme: "dark",
       style: "1",
       locale: "kr",
-      backgroundColor: "#1a1a1a",
+      backgroundColor: "#0b1326",
       gridColor: "rgba(68,68,68,0.3)",
       hide_top_toolbar: false,
       hide_legend: false,
@@ -158,7 +158,7 @@ function TradingViewChart({ ticker }) {
   }, [ticker]);
 
   return (
-    <div style={{ width: "100%", height: 1000, borderRadius: 8, overflow: "hidden", border: `1px solid ${TH.border}`, marginBottom: 12, background: "#1a1a1a" }}>
+    <div style={{ width: "100%", height: "100%", flex: 1, overflow: "hidden", background: TH.bg }}>
       <div className="tradingview-widget-container" ref={containerRef} style={{ height: "100%", width: "100%" }} />
     </div>
   );
@@ -1627,7 +1627,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ width: detailFullscreen ? undefined : 480, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ flex: 1, minWidth: 400, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
           <>
             {/* Header with close + fullscreen */}
             <div style={{ padding: "12px 16px", background: TH.surface, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>

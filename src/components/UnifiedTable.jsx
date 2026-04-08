@@ -5,11 +5,11 @@ export default function UnifiedTable({ C, data, viewMode, collapsed, setCollapse
 
   const s = {
     container: { backgroundColor: C.surfaceAlt, borderRadius: 8, border: `1px solid ${C.outlineVar}`, overflow: "hidden", flex: 1 },
-    th: { fontFamily: "'Inter', sans-serif", padding: "14px 12px", textAlign: "left", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: C.textDim, borderBottom: `1px solid ${C.outline}`, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap", backgroundColor: C.surfaceHigh },
-    td: { fontFamily: "'Inter', sans-serif", padding: "10px 12px", borderBottom: `1px solid ${C.borderLight}`, verticalAlign: "middle", fontSize: 12 },
+    th: { fontFamily: "'Inter', sans-serif", padding: "16px 16px", textAlign: "left", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: C.textDim, borderBottom: `1px solid ${C.outline}`, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap", backgroundColor: C.surfaceHigh },
+    td: { fontFamily: "'Inter', sans-serif", padding: "14px 16px", borderBottom: `1px solid ${C.borderLight}`, verticalAlign: "middle", fontSize: 13 },
     groupHeader: { padding: "8px 16px", backgroundColor: `${C.surfaceHighest}80`, color: C.primary, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", borderTop: `1px solid ${C.borderLight}`, borderBottom: `1px solid ${C.borderLight}`, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" },
-    tickerName: { fontWeight: 800, fontSize: 14, color: C.textBright, lineHeight: 1.2 },
-    tickerSub: { fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.05em" },
+    tickerName: { fontWeight: 900, fontSize: 14, color: C.textBright, lineHeight: 1.3, letterSpacing: "-0.02em" },
+    tickerSub: { fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 },
     heatCell: (value) => {
       const abs = Math.abs(value || 0);
       const intensity = Math.min(abs / 15, 0.8);

@@ -1437,7 +1437,7 @@ export default function Dashboard() {
       )}
       {error && (
         <div style={{ position: "fixed", top: 8, left: "50%", transform: "translateX(-50%)", background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: 6, padding: "6px 14px", fontSize: 12, color: "#fca5a5", zIndex: 50 }}>
-          ⚠ 서버 연결 오류: {error} — 백엔드 서버(port 3001)가 실행 중인지 확인하세요.
+          ⚠ 서버 연결 오류: {error}
         </div>
       )}
 

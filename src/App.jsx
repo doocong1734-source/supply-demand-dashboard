@@ -1558,6 +1558,8 @@ export default function Dashboard() {
                           { label: "ATRx", key: "distSma50Atr" },
                           { label: "수급", key: "score" },
                           { label: "EPS올해", key: "epsThisY" },
+                          { label: "EPS(1Y)", key: "epsNextY" },
+                          { label: "EPS(5Y)", key: "eps5Y" },
                           { label: "매출Q", key: "salesQQ" },
                           { label: "기관↑↓", key: "instTrans" },
                           { label: "P/E", key: "pe" },
@@ -1615,6 +1617,8 @@ export default function Dashboard() {
                               <td style={{ ...tdStyle, fontSize: 11 }}>{row.distSma50Atr?.toFixed(2) ?? "-"}</td>
                               <td style={tdStyle}><ScoreCell score={row.score} /></td>
                               {pctCell(row.epsThisY, 20, 0)}
+                              {pctCell(row.epsNextY, 10, 0)}
+                              {pctCell(row.eps5Y, 10, 0)}
                               {pctCell(row.salesQQ, 10, 0)}
                               <td style={{ ...tdStyle, fontSize: 10, color: row.instTrans == null ? TH.textDim : row.instTrans > 0 ? TH.green : TH.red }}>
                                 {row.instTrans != null ? `${row.instTrans > 0 ? "▲" : "▼"}${Math.abs(row.instTrans).toFixed(1)}%` : "-"}

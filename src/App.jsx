@@ -1147,7 +1147,7 @@ function ScreenerPanel({ lists, activeIdx, addToList, addList, isFavorite, isInA
 
       {/* ── Right: TradingView chart ── */}
       {chartTicker && showChart && (
-        <div style={{ width: 520, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: `1px solid ${TH.outlineVar}` }}>
+        <div style={{ flex: '0 0 52%', minWidth: 640, display: "flex", flexDirection: "column", borderLeft: `1px solid ${TH.outlineVar}` }}>
           <div style={{ padding: "8px 12px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontWeight: 700, fontSize: 14 }}>{chartTicker}</span>
             <div style={{ display: "flex", gap: 6 }}>

@@ -716,8 +716,10 @@ async function scrFetchFinviz(ticker) {
         // 라벨 셀도 <a> 안에 있을 수 있음: Short Float</a></td>
         const get = (label) => {
             const esc = label.replace(/[/()]/g, "\\$&");
+            // 신규 Finviz HTML 구조 (2025~):
+            // snapshot-td-label">LABEL</div></td><td...><div class="snapshot-td-content">(<a...>)?<b>(<span...>)?VALUE
             const m = html.match(new RegExp(
-                `>${esc}<(?:\\/a><)?\\/td><td[^>]*>(?:<a[^>]*>)?<b>(?:<span[^>]*>)?([\\-+\\d\\.%NA]+)(?:<\\/span>)?<\\/b>`
+                `snapshot-td-label\">[^<]*${esc}[^<]*<\\/(?:a>)?<\\/div><\\/td><td[^>]*><div class="snapshot-td-content">(?:<a[^>]*>)?<b>(?:<span[^>]*>)?([\\-+\\d\\.%NA]+)`
             ));
             return m?.[1] ?? null;
         };

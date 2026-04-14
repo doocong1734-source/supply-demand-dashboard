@@ -1005,7 +1005,12 @@ app.get("/api/indicators/:ticker", async (req, res) => {
         const weeklyVol = ohlcv.slice(-5).reduce((a, d) => a + (d.volume || 0), 0);
         const monthlyVol = ohlcv.slice(-20).reduce((a, d) => a + (d.volume || 0), 0);
 
-        const result = { abc, distSma50Atr, atrPct, rs, obv, mfi, vwapDev, adlTrend, orderDelta, fiveD, twentyD, varsChart, rsi, bbPos, volRatio, sma200Dev, macdHist, dailyVol, weeklyVol, monthlyVol };
+        // Finviz 펀더멘탈 (dayCache 24h)
+        const fv = await scrFetchFinviz(ticker);
+
+        const result = { abc, distSma50Atr, atrPct, rs, obv, mfi, vwapDev, adlTrend, orderDelta, fiveD, twentyD, varsChart, rsi, bbPos, volRatio, sma200Dev, macdHist, dailyVol, weeklyVol, monthlyVol,
+            pe: fv.pe, fpe: fv.fpe, epsThisY: fv.epsThisY, epsNextY: fv.epsNextY, eps5Y: fv.eps5Y,
+            salesQQ: fv.salesQQ, instTrans: fv.instTrans, shortFloat: fv.shortFloat, roe: fv.roe };
         cache.set(cacheKey, result);
         res.json(result);
     } catch (e) {

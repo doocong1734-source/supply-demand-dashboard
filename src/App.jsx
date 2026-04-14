@@ -1190,6 +1190,8 @@ export default function Dashboard() {
   const [contextMenu, setContextMenu] = useState(null); // { x, y, ticker }
   const rowRefs = useRef({});
   const autoFetchingRef = useRef(new Set()); // 중복 자동조회 방지
+  const [wlFilter, setWlFilter] = useState({ minEps: "", minSales: "", maxPe: "", minRoe: "" });
+  const [wlSort, setWlSort] = useState({ key: null, dir: 1 });
 
   // 관심종목 탭 진입 시 데이터 없는 즐겨찾기 자동 fetch
   useEffect(() => {
@@ -1521,54 +1523,115 @@ export default function Dashboard() {
               )}
               {favorites.length > 0 && (
                 <div>
-                  <div style={{ padding: "6px 10px", background: TH.surface, fontWeight: 700, fontSize: 12, borderBottom: `1px solid ${TH.border}`, color: TH.yellow }}>★ {lists[activeIdx]?.name} ({favorites.length})</div>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  {/* 필터 바 */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 10, color: TH.textDim, fontWeight: 700 }}>FILTER</span>
+                    {[
+                      { label: "EPS올해≥", key: "minEps", placeholder: "%" },
+                      { label: "매출Q≥",  key: "minSales", placeholder: "%" },
+                      { label: "P/E≤",    key: "maxPe", placeholder: "" },
+                      { label: "ROE≥",    key: "minRoe", placeholder: "%" },
+                    ].map(({ label, key, placeholder }) => (
+                      <label key={key} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        <span style={{ fontSize: 10, color: TH.textDim }}>{label}</span>
+                        <input
+                          type="number" value={wlFilter[key]} placeholder={placeholder}
+                          onChange={e => setWlFilter(f => ({ ...f, [key]: e.target.value }))}
+                          style={{ width: 52, background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 11, outline: "none" }}
+                        />
+                      </label>
+                    ))}
+                    <button onClick={() => setWlFilter({ minEps: "", minSales: "", maxPe: "", minRoe: "" })}
+                      style={{ fontSize: 10, padding: "2px 8px", background: "none", border: `1px solid ${TH.border}`, borderRadius: 3, color: TH.textDim, cursor: "pointer" }}>초기화</button>
+                    <span style={{ marginLeft: "auto", fontSize: 11, color: TH.yellow, fontWeight: 700 }}>★ {lists[activeIdx]?.name} ({favorites.length})</span>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
                     <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
                       <tr>
-                        <th style={thStyle}>Ticker</th>
-                        <th style={thStyle}>Grd</th>
-                        <th style={thStyle}>Daily</th>
-                        <th style={thStyle}>5D</th>
-                        <th style={thStyle}>20D</th>
-                        <th style={thStyle}>ATRx</th>
-                        <th style={thStyle}>VARS</th>
-                        <th style={thStyle}>수급</th>
-                        <th style={thStyle}>시그널</th>
-                        <th style={thStyle}>★</th>
+                        {[
+                          { label: "Ticker", key: "ticker" },
+                          { label: "Grd", key: "abc" },
+                          { label: "Daily", key: "daily" },
+                          { label: "5D", key: "fiveD" },
+                          { label: "20D", key: "twentyD" },
+                          { label: "ATRx", key: "distSma50Atr" },
+                          { label: "수급", key: "score" },
+                          { label: "EPS올해", key: "epsThisY" },
+                          { label: "매출Q", key: "salesQQ" },
+                          { label: "기관↑↓", key: "instTrans" },
+                          { label: "P/E", key: "pe" },
+                          { label: "ROE", key: "roe" },
+                          { label: "시그널", key: "signal" },
+                          { label: "★", key: null },
+                        ].map(({ label, key }) => (
+                          <th key={label} style={{ ...thStyle, cursor: key ? "pointer" : "default", userSelect: "none",
+                            color: wlSort.key === key ? TH.yellow : undefined }}
+                            onClick={() => key && setWlSort(s => ({ key, dir: s.key === key ? -s.dir : 1 }))}>
+                            {label}{wlSort.key === key ? (wlSort.dir > 0 ? " ▲" : " ▼") : ""}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {favorites.map((fav, i) => {
-                        // 메인 데이터 → 검색 캐시 순으로 row 찾기
-                        const row = (data ? Object.values(data).flat().find(r => r.ticker === fav) : null)
-                          || customFavData[fav];
-                        if (!row) return (
-                          <tr key={fav} style={{ backgroundColor: i % 2 === 0 ? TH.bg : "transparent" }}>
-                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
-                            <td style={{ ...tdStyle, color: TH.textDim, fontSize: 11 }} colSpan={7}>⏳ 데이터 로딩 중...</td>
-                            <td style={tdStyle}><button onClick={() => toggleFavorite(fav)} style={{ background: "none", border: "none", cursor: "pointer", color: TH.yellow, fontSize: 16 }}>★</button></td>
-                          </tr>
-                        );
-                        const isActive = selected?.ticker === fav;
-                        return (
-                          <tr key={fav} onClick={() => handleSelectRow(row)} style={{ cursor: "pointer", backgroundColor: isActive ? TH.surfaceHigh : i % 2 === 0 ? TH.bg : "transparent" }}>
-                            <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
-                            <td style={tdStyle}><ABCBadge grade={row.abc} /></td>
-                            <ValueBar value={row.daily} min={-5} max={5} />
-                            <ValueBar value={row["5d"]} min={-10} max={10} />
-                            <ValueBar value={row["20d"]} min={-15} max={15} />
-                            <td style={{ ...tdStyle, fontSize: 11 }}>{row.distSma50Atr?.toFixed(2)}</td>
-                            <td style={{ ...tdStyle, fontSize: 11 }}>{row.rs}%</td>
-                            <td style={tdStyle}><ScoreCell score={row.score} /></td>
-                            <td style={tdStyle}><SignalBadge signal={row.signal} compact /></td>
-                            <td style={tdStyle}>
-                              <button onClick={e => { e.stopPropagation(); toggleFavorite(fav); }} style={{ background: "none", border: "none", cursor: "pointer", color: TH.yellow, fontSize: 16 }}>★</button>
+                      {(() => {
+                        let rows = favorites.map(fav => ({
+                          fav,
+                          row: (data ? Object.values(data).flat().find(r => r.ticker === fav) : null) || customFavData[fav]
+                        }));
+                        // 필터
+                        if (wlFilter.minEps !== "") rows = rows.filter(({ row }) => row?.epsThisY != null && row.epsThisY >= Number(wlFilter.minEps));
+                        if (wlFilter.minSales !== "") rows = rows.filter(({ row }) => row?.salesQQ != null && row.salesQQ >= Number(wlFilter.minSales));
+                        if (wlFilter.maxPe !== "") rows = rows.filter(({ row }) => row?.pe != null && row.pe <= Number(wlFilter.maxPe));
+                        if (wlFilter.minRoe !== "") rows = rows.filter(({ row }) => row?.roe != null && row.roe >= Number(wlFilter.minRoe));
+                        // 정렬
+                        if (wlSort.key) rows = [...rows].sort((a, b) => {
+                          const av = a.row?.[wlSort.key] ?? -Infinity;
+                          const bv = b.row?.[wlSort.key] ?? -Infinity;
+                          return typeof av === "string" ? av.localeCompare(bv) * wlSort.dir : (av - bv) * wlSort.dir;
+                        });
+                        return rows.map(({ fav, row }, i) => {
+                          if (!row) return (
+                            <tr key={fav} style={{ backgroundColor: i % 2 === 0 ? TH.bg : "transparent" }}>
+                              <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
+                              <td style={{ ...tdStyle, color: TH.textDim, fontSize: 11 }} colSpan={12}>⏳ 로딩 중...</td>
+                              <td style={tdStyle}><button onClick={() => toggleFavorite(fav)} style={{ background: "none", border: "none", cursor: "pointer", color: TH.yellow, fontSize: 16 }}>★</button></td>
+                            </tr>
+                          );
+                          const isActive = selected?.ticker === fav;
+                          const pctCell = (val, good, bad) => (
+                            <td style={{ ...tdStyle, fontSize: 10, fontWeight: 700,
+                              color: val == null ? TH.textDim : val >= good ? TH.green : val < bad ? TH.red : TH.text }}>
+                              {val != null ? `${val >= 0 ? "+" : ""}${val.toFixed(0)}%` : "-"}
                             </td>
-                          </tr>
-                        );
-                      })}
+                          );
+                          return (
+                            <tr key={fav} onClick={() => handleSelectRow(row)} style={{ cursor: "pointer", backgroundColor: isActive ? TH.surfaceHigh : i % 2 === 0 ? TH.bg : "transparent" }}>
+                              <td style={tdStyle}><span style={{ padding: "2px 8px", borderRadius: 12, background: TH.surfaceHighest, color: "#fff", fontSize: 11, fontWeight: 700 }}>{fav}</span></td>
+                              <td style={tdStyle}><ABCBadge grade={row.abc} /></td>
+                              <ValueBar value={row.daily} min={-5} max={5} />
+                              <ValueBar value={row.fiveD ?? row["5d"]} min={-10} max={10} />
+                              <ValueBar value={row.twentyD ?? row["20d"]} min={-15} max={15} />
+                              <td style={{ ...tdStyle, fontSize: 11 }}>{row.distSma50Atr?.toFixed(2) ?? "-"}</td>
+                              <td style={tdStyle}><ScoreCell score={row.score} /></td>
+                              {pctCell(row.epsThisY, 20, 0)}
+                              {pctCell(row.salesQQ, 10, 0)}
+                              <td style={{ ...tdStyle, fontSize: 10, color: row.instTrans == null ? TH.textDim : row.instTrans > 0 ? TH.green : TH.red }}>
+                                {row.instTrans != null ? `${row.instTrans > 0 ? "▲" : "▼"}${Math.abs(row.instTrans).toFixed(1)}%` : "-"}
+                              </td>
+                              <td style={{ ...tdStyle, fontSize: 10, color: row.pe != null && row.pe < 20 ? TH.green : TH.textDim }}>{row.pe != null ? row.pe.toFixed(1) : "-"}</td>
+                              <td style={{ ...tdStyle, fontSize: 10, color: row.roe != null && row.roe >= 15 ? TH.green : TH.textDim }}>{row.roe != null ? `${row.roe.toFixed(0)}%` : "-"}</td>
+                              <td style={tdStyle}><SignalBadge signal={row.signal} compact /></td>
+                              <td style={tdStyle}>
+                                <button onClick={e => { e.stopPropagation(); toggleFavorite(fav); }} style={{ background: "none", border: "none", cursor: "pointer", color: TH.yellow, fontSize: 16 }}>★</button>
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
             </div>

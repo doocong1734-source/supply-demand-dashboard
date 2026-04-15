@@ -1523,27 +1523,10 @@ export default function Dashboard() {
               )}
               {favorites.length > 0 && (
                 <div>
-                  {/* 필터 바 */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: TH.surface, borderBottom: `1px solid ${TH.border}`, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 10, color: TH.textDim, fontWeight: 700 }}>FILTER</span>
-                    {[
-                      { label: "EPS올해≥", key: "minEps", placeholder: "%" },
-                      { label: "매출Q≥",  key: "minSales", placeholder: "%" },
-                      { label: "P/E≤",    key: "maxPe", placeholder: "" },
-                      { label: "ROE≥",    key: "minRoe", placeholder: "%" },
-                    ].map(({ label, key, placeholder }) => (
-                      <label key={key} style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                        <span style={{ fontSize: 10, color: TH.textDim }}>{label}</span>
-                        <input
-                          type="number" value={wlFilter[key]} placeholder={placeholder}
-                          onChange={e => setWlFilter(f => ({ ...f, [key]: e.target.value }))}
-                          style={{ width: 52, background: TH.bg, color: TH.text, border: `1px solid ${TH.border}`, borderRadius: 3, padding: "2px 4px", fontSize: 11, outline: "none" }}
-                        />
-                      </label>
-                    ))}
-                    <button onClick={() => setWlFilter({ minEps: "", minSales: "", maxPe: "", minRoe: "" })}
-                      style={{ fontSize: 10, padding: "2px 8px", background: "none", border: `1px solid ${TH.border}`, borderRadius: 3, color: TH.textDim, cursor: "pointer" }}>초기화</button>
-                    <span style={{ marginLeft: "auto", fontSize: 11, color: TH.yellow, fontWeight: 700 }}>★ {lists[activeIdx]?.name} ({favorites.length})</span>
+                  {/* 목록 헤더 */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", background: TH.surface, borderBottom: `1px solid ${TH.border}` }}>
+                    <span style={{ fontSize: 11, color: TH.yellow, fontWeight: 700 }}>★ {lists[activeIdx]?.name} ({favorites.length})</span>
+                    <span style={{ fontSize: 10, color: TH.textDim }}>헤더 클릭으로 정렬</span>
                   </div>
                   <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>

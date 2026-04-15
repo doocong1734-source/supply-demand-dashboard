@@ -1463,7 +1463,7 @@ export default function Dashboard() {
       )}
 
       {/* ═══ LEFT PANEL ═══ */}
-      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, minWidth: viewMode === "watchlist" ? 0 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Header - Sub controls */}
         <div style={{ padding: "8px 10px", background: TH.surfaceAlt, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>
           {(viewMode === "combined" || viewMode === "flow") && (
@@ -1709,12 +1709,23 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{
-        ...(viewMode === "watchlist"
-          ? { position: "fixed", top: 52, right: 0, width: "48%", bottom: 0, zIndex: 50 }
-          : detailFullscreen
-            ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 }
-            : { flex: 1, minWidth: 400 }
+      {/* Watchlist fixed overlay chart */}
+      {viewMode === "watchlist" && selected && (
+        <div style={{ position: "fixed", top: 52, right: 0, width: "52%", bottom: 0, zIndex: 50, display: "flex", flexDirection: "column", borderLeft: `2px solid ${TH.border}`, background: TH.surfaceAlt, overflow: "hidden" }}>
+          <div style={{ padding: "8px 12px", background: TH.surface, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 16, fontWeight: 900, color: TH.textBright }}>{selected.ticker}</span>
+            <span onClick={() => setSelected(null)} style={{ cursor: "pointer", color: TH.textDim, fontSize: 18 }}>✕</span>
+          </div>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <TradingViewChart ticker={selected.ticker} />
+          </div>
+        </div>
+      )}
+
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "watchlist" && selected && <div style={{
+        ...(detailFullscreen
+          ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 }
+          : { flex: 1, minWidth: 400 }
         ),
         display: "flex", flexDirection: "column", borderLeft: `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden"
       }}>

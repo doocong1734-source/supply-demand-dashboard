@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useMarketData } from "./hooks/useMarketData.js";
 import { useFavorites } from "./hooks/useFavorites.js";
 import UnifiedTable from "./components/UnifiedTable.jsx";
+import { calcScore, scoreToSignal } from "./utils/indicators.js";
 
 // Design System - US.MARKET Terminal (Stitch 2026-04)
 const TH = {
@@ -1233,10 +1234,14 @@ export default function Dashboard() {
             salesQQ: ind.salesQQ ?? null, instTrans: ind.instTrans ?? null, roe: ind.roe ?? null,
             varsChart: ind.varsChart ?? [],
             longETF: [], shortETF: [],
-            score: 0, signal: "중립", phase: "모니터링",
             indicators: { obv: ind.obv ?? 0, mfi: ind.mfi ?? 50, vwapDev: ind.vwapDev ?? 0, adlTrend: ind.adlTrend ?? "중립", rsi: ind.rsi ?? 50, bbPos: ind.bbPos ?? 50, volRatio: ind.volRatio ?? 100, sma200Dev: ind.sma200Dev ?? 0, macdHist: ind.macdHist ?? 0, shortInt: null, breadth: 50, orderDelta: ind.orderDelta ?? 0 },
             price: q.price ?? 0,
           };
+          const sc = calcScore({ obv: row.indicators.obv, mfi: row.indicators.mfi, rsi: row.indicators.rsi, bbPos: row.indicators.bbPos, volRatio: row.indicators.volRatio, sma200Dev: row.indicators.sma200Dev, macdHist: row.indicators.macdHist, shortInt: null, breadth: 50 });
+          const sig = scoreToSignal(sc);
+          row.score = sc;
+          row.signal = sig.signal;
+          row.phase = sig.phase;
           setCustomFavData(prev => ({ ...prev, [t]: row }));
         } catch (_) { /* 실패 시 무시 */ }
       }

@@ -1428,31 +1428,32 @@ export default function Dashboard() {
     <>
     <div style={{ fontFamily: "'Inter', Arial, sans-serif", background: TH.bg, color: TH.text, height: "100vh", margin: 0, overflow: "hidden" }}>
       {/* ═══ TOP NAV BAR ═══ */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, height: 52, background: TH.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${TH.borderLight}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", zIndex: 1000 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.05em", color: TH.primary }}>US.MARKET</span>
-          <div style={{ display: "flex", alignItems: "center", height: 52 }}>
-            {[
-              ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
-              ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"], ["themes", "KR테마"], ["usthemes", "US테마"],
-            ].map(([id, label]) => (
-              <button key={id} onClick={() => setViewMode(id)}
-                style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 17, height: 52, padding: "0 16px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${TH.primary}` : "2px solid transparent", color: viewMode === id ? TH.primary : TH.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
-                {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: TH.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <style>{`.nav-tabs::-webkit-scrollbar { display: none; }`}</style>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, height: 52, background: TH.navBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${TH.borderLight}`, display: "flex", alignItems: "center", padding: "0 8px 0 12px", zIndex: 1000, gap: 0 }}>
+        {/* 로고 (고정) */}
+        <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.05em", color: TH.primary, flexShrink: 0, marginRight: 8 }}>US.MARKET</span>
+        {/* 탭 (가로 스크롤) */}
+        <div className="nav-tabs" style={{ display: "flex", alignItems: "center", height: 52, flex: 1, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
           {[
-            ["TOTAL", stats.total, TH.textBright], ["BUY", stats.buy, TH.primary], ["SELL", stats.sell, TH.secondary], ["A", stats.gradeA, TH.primary], ["C", stats.gradeC, TH.tertiary],
+            ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
+            ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"], ["themes", "KR테마"], ["usthemes", "US테마"],
+          ].map(([id, label]) => (
+            <button key={id} onClick={() => setViewMode(id)}
+              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 14, height: 52, padding: "0 11px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${TH.primary}` : "2px solid transparent", color: viewMode === id ? TH.primary : TH.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {label}{id === "watchlist" && totalCount > 0 && <span style={{ marginLeft: 4, background: TH.primary, color: "#000", borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800 }}>{totalCount}</span>}
+            </button>
+          ))}
+        </div>
+        {/* 우측 통계 (모바일에서 숨김) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, marginLeft: 8 }}>
+          {[
+            ["BUY", stats.buy, TH.primary], ["SELL", stats.sell, TH.secondary],
           ].map(([label, val, color]) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3px 10px", borderRadius: 6, background: TH.surface }}>
+            <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3px 8px", borderRadius: 6, background: TH.surface }}>
               <span style={{ fontSize: 9, fontWeight: 700, color: TH.textDim, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color }}>{val}</span>
             </div>
           ))}
-          {lastUpdated && <span style={{ fontSize: 10, color: TH.textDim, marginLeft: 4 }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>}
         </div>
       </nav>
 

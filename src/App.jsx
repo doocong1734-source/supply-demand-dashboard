@@ -133,6 +133,8 @@ function TradingViewChart({ ticker }) {
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
+      width: "100%",
+      height: "100%",
       symbol: ticker.endsWith(".KS") || ticker.endsWith(".KQ") ? `KRX:${ticker.split(".")[0]}` : ticker,
       interval: "D",
       timezone: "Asia/Seoul",
@@ -1213,9 +1215,13 @@ export default function Dashboard() {
           const row = {
             ticker: t, sector: "관심종목", group: "관심종목",
             daily: q.daily ?? 0, intra: q.intra ?? 0,
+            fiveD: ind.fiveD ?? 0, twentyD: ind.twentyD ?? 0,
             "5d": ind.fiveD ?? 0, "20d": ind.twentyD ?? 0,
             atrPct: ind.atrPct ?? 0, distSma50Atr: ind.distSma50Atr ?? 0,
             rs: ind.rs ?? 50, abc: ind.abc ?? "B",
+            pe: ind.pe ?? null, fpe: ind.fpe ?? null,
+            epsThisY: ind.epsThisY ?? null, epsNextY: ind.epsNextY ?? null, eps5Y: ind.eps5Y ?? null,
+            salesQQ: ind.salesQQ ?? null, instTrans: ind.instTrans ?? null, roe: ind.roe ?? null,
             varsChart: ind.varsChart ?? [],
             longETF: [], shortETF: [],
             score: 0, signal: "중립", phase: "모니터링",
@@ -1377,9 +1383,13 @@ export default function Dashboard() {
       const row = {
         ticker: t, sector: "검색결과", group: "검색",
         daily: q.daily ?? 0, intra: q.intra ?? 0,
+        fiveD: ind.fiveD ?? 0, twentyD: ind.twentyD ?? 0,
         "5d": ind.fiveD ?? 0, "20d": ind.twentyD ?? 0,
         atrPct: ind.atrPct ?? 0, distSma50Atr: ind.distSma50Atr ?? 0,
         rs: ind.rs ?? 50, abc: ind.abc ?? "B",
+        pe: ind.pe ?? null, fpe: ind.fpe ?? null,
+        epsThisY: ind.epsThisY ?? null, epsNextY: ind.epsNextY ?? null, eps5Y: ind.eps5Y ?? null,
+        salesQQ: ind.salesQQ ?? null, instTrans: ind.instTrans ?? null, roe: ind.roe ?? null,
         varsChart: ind.varsChart ?? [],
         longETF: [], shortETF: [],
         score: 0, signal: "중립", phase: "모니터링",
@@ -1444,7 +1454,7 @@ export default function Dashboard() {
       )}
 
       {/* ═══ LEFT PANEL ═══ */}
-      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? 1 : undefined, minWidth: viewMode === "watchlist" ? 0 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Header - Sub controls */}
         <div style={{ padding: "8px 10px", background: TH.surfaceAlt, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>
           {(viewMode === "combined" || viewMode === "flow") && (
@@ -1477,7 +1487,7 @@ export default function Dashboard() {
         </div>
 
         {/* Table / Watchlist */}
-        <div style={{ flex: 1, overflowY: viewMode === "mijoomo" ? "hidden" : "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, overflowY: viewMode === "mijoomo" ? "hidden" : "auto", overflowX: viewMode === "watchlist" ? "auto" : "hidden", display: "flex", flexDirection: "column", minWidth: viewMode === "watchlist" ? 0 : undefined }}>
 
           {/* ── 관심종목 뷰 ── */}
           {viewMode === "watchlist" && (
@@ -1522,14 +1532,14 @@ export default function Dashboard() {
                 </div>
               )}
               {favorites.length > 0 && (
-                <div>
+                <div style={{ minWidth: 0 }}>
                   {/* 목록 헤더 */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", background: TH.surface, borderBottom: `1px solid ${TH.border}` }}>
                     <span style={{ fontSize: 11, color: TH.yellow, fontWeight: 700 }}>★ {lists[activeIdx]?.name} ({favorites.length})</span>
                     <span style={{ fontSize: 10, color: TH.textDim }}>헤더 클릭으로 정렬</span>
                   </div>
-                  <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+                  <div style={{ overflowX: "auto", minWidth: 0 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}>
                     <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
                       <tr>
                         {[
@@ -1571,9 +1581,19 @@ export default function Dashboard() {
                         if (wlFilter.minRoe !== "") rows = rows.filter(({ row }) => row?.roe != null && row.roe >= Number(wlFilter.minRoe));
                         // 정렬
                         if (wlSort.key) rows = [...rows].sort((a, b) => {
-                          const av = a.row?.[wlSort.key] ?? -Infinity;
-                          const bv = b.row?.[wlSort.key] ?? -Infinity;
-                          return typeof av === "string" ? av.localeCompare(bv) * wlSort.dir : (av - bv) * wlSort.dir;
+                          const getSortValue = (row) => {
+                            if (!row) return null;
+                            if (wlSort.key === "fiveD") return row.fiveD ?? row["5d"] ?? null;
+                            if (wlSort.key === "twentyD") return row.twentyD ?? row["20d"] ?? null;
+                            return row[wlSort.key] ?? null;
+                          };
+                          const av = getSortValue(a.row);
+                          const bv = getSortValue(b.row);
+                          if (av == null && bv == null) return 0;
+                          if (av == null) return 1;
+                          if (bv == null) return -1;
+                          if (typeof av === "string" || typeof bv === "string") return String(av).localeCompare(String(bv)) * wlSort.dir;
+                          return (av - bv) * wlSort.dir;
                         });
                         return rows.map(({ fav, row }, i) => {
                           if (!row) return (

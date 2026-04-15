@@ -1562,7 +1562,7 @@ export default function Dashboard() {
                       {(() => {
                         let rows = favorites.map(fav => ({
                           fav,
-                          row: (data ? Object.values(data).flat().find(r => r.ticker === fav) : null) || customFavData[fav]
+                          row: (data ? Object.values(data).flat().find(r => r.ticker === fav) : null) || (customFavData[fav] ? { ...customFavData[fav], ticker: fav } : null)
                         }));
                         // 필터
                         if (wlFilter.minEps !== "") rows = rows.filter(({ row }) => row?.epsThisY != null && row.epsThisY >= Number(wlFilter.minEps));

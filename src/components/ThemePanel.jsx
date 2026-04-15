@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ── Light Theme Colors ─────────────────────────────────────────
 const TH = {
@@ -75,6 +75,50 @@ function StockTag({ stock }) {
       <span style={{ color: TH.text, fontWeight: 500 }}>{stock.name}</span>
       <span style={{ color, fontWeight: 700 }}>{pct > 0 ? "+" : ""}{pct.toFixed(1)}%</span>
     </span>
+  );
+}
+
+function TickerTape({ themes }) {
+  const ref = useRef(null);
+  // 상위 20개 등락률 순으로 표시
+  const items = themes.slice(0, 20);
+  if (!items.length) return null;
+
+  // 충분히 길게 반복
+  const repeated = [...items, ...items, ...items];
+
+  return (
+    <div style={{
+      background: "#1a1d2e", overflow: "hidden", height: 36,
+      display: "flex", alignItems: "center",
+      borderBottom: "1px solid #2d3149",
+      marginBottom: 20, borderRadius: 8,
+    }}>
+      <style>{`
+        @keyframes tickerScroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-33.333%); }
+        }
+      `}</style>
+      <div ref={ref} style={{
+        display: "flex", gap: 0,
+        animation: "tickerScroll 40s linear infinite",
+        whiteSpace: "nowrap",
+      }}>
+        {repeated.map((t, i) => {
+          const v = parseRate(t.rate_d1);
+          const color = v > 0 ? "#4ade80" : v < 0 ? "#f87171" : "#9ca3af";
+          return (
+            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0 18px", borderRight: "1px solid #2d3149", height: 36 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{t.name}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color, fontFamily: "monospace" }}>
+                {v > 0 ? "+" : ""}{v.toFixed(2)}%
+              </span>
+            </span>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -217,6 +261,8 @@ export default function ThemePanel() {
           <div style={{ fontSize: 12 }}>약 20-30초 소요됩니다</div>
         </div>
       )}
+
+      {data && themes.length > 0 && <TickerTape themes={themes} />}
 
       {data && (
         <>

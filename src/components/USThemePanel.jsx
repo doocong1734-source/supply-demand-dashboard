@@ -171,7 +171,7 @@ function TickerTape({ quotes }) {
   return (
     <div style={{ background: "#1a1d2e", overflow: "hidden", height: 36, display: "flex", alignItems: "center", borderBottom: `1px solid ${TH.border}`, marginBottom: 20, borderRadius: 8 }}>
       <style>{`@keyframes usTickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-33.333%); } }`}</style>
-      <div style={{ display: "flex", animation: "usTickerScroll 60s linear infinite", whiteSpace: "nowrap" }}>
+      <div style={{ display: "flex", animation: "usTickerScroll 120s linear infinite", whiteSpace: "nowrap" }}>
         {repeated.map((g, i) => {
           const color = g.avg > 0 ? "#4ade80" : g.avg < 0 ? "#f87171" : "#9ca3af";
           const catColor = CATEGORY_COLORS[g.cat] || "#9ca3af";

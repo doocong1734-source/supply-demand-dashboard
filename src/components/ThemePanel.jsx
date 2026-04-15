@@ -98,7 +98,7 @@ function TickerTape({ themes, rateKey = "rate_d1" }) {
       `}</style>
       <div ref={ref} style={{
         display: "flex", gap: 0,
-        animation: "tickerScroll 40s linear infinite",
+        animation: "tickerScroll 100s linear infinite",
         whiteSpace: "nowrap",
       }}>
         {repeated.map((t, i) => {

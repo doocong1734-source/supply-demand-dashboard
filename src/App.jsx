@@ -1697,7 +1697,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "watchlist" && selected && <div style={{ flex: 1, minWidth: 400, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ flex: 1, minWidth: viewMode === "watchlist" ? 320 : 400, maxWidth: viewMode === "watchlist" ? 480 : undefined, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
           <>
             {/* Header with close + fullscreen */}
             <div style={{ padding: "12px 16px", background: TH.surface, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>

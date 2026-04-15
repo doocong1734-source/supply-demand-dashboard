@@ -3,7 +3,7 @@ node_modules/
 server/node_modules/
 
 # Build output
-dist/
+# dist/ — 빌드 결과를 Git에 포함해 Render 서빙
 build/
 
 # Environment variables

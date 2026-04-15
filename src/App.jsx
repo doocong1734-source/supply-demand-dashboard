@@ -3,6 +3,7 @@ import { useMarketData } from "./hooks/useMarketData.js";
 import { useFavorites } from "./hooks/useFavorites.js";
 import UnifiedTable from "./components/UnifiedTable.jsx";
 import ThemePanel from "./components/ThemePanel.jsx";
+import USThemePanel from "./components/USThemePanel.jsx";
 import { calcScore, scoreToSignal } from "./utils/indicators.js";
 
 // Design System - US.MARKET Terminal (Stitch 2026-04)
@@ -1433,7 +1434,7 @@ export default function Dashboard() {
           <div style={{ display: "flex", alignItems: "center", height: 52 }}>
             {[
               ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
-              ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"], ["themes", "KR테마"],
+              ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"], ["themes", "KR테마"], ["usthemes", "US테마"],
             ].map(([id, label]) => (
               <button key={id} onClick={() => setViewMode(id)}
                 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 17, height: 52, padding: "0 16px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${TH.primary}` : "2px solid transparent", color: viewMode === id ? TH.primary : TH.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center" }}>
@@ -1469,7 +1470,7 @@ export default function Dashboard() {
       )}
 
       {/* ═══ LEFT PANEL ═══ */}
-      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Header - Sub controls */}
         <div style={{ padding: "8px 10px", background: TH.surfaceAlt, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>
           {(viewMode === "combined" || viewMode === "flow") && (
@@ -1675,6 +1676,13 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ── US 테마 스캐너 ── */}
+          {viewMode === "usthemes" && (
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <USThemePanel />
+            </div>
+          )}
+
           {/* ── 스크리너 뷰 (항상 마운트, 탭 전환 시 상태 유지) ── */}
           <div style={{ display: viewMode === "screener" ? "flex" : "none", flex: 1, height: "100%", overflow: "hidden" }}>
             <ScreenerPanel lists={lists} activeIdx={activeIdx} addToList={addToList} addList={addList} isFavorite={isFavorite} isInAnyList={isInAnyList} toggleFavorite={toggleFavorite} onGoMScore={() => setViewMode("mscore")} />
@@ -1705,7 +1713,7 @@ export default function Dashboard() {
           )}
 
           {/* ── 메인 테이블 뷰 (Stitch Design) ── */}
-          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "mscore" && viewMode !== "trigger" && data && (
+          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "usthemes" && viewMode !== "mscore" && viewMode !== "trigger" && data && (
             <UnifiedTable C={TH} data={data} viewMode={viewMode} collapsed={collapsed} setCollapsed={setCollapsed}
               sortStates={sortStates} handleSort={handleSort} getSortIndicator={getSortIndicator}
               filterRows={filterRows} getSortedRows={getSortedRows} selected={selected} handleSelectRow={handleSelectRow}
@@ -1713,7 +1721,7 @@ export default function Dashboard() {
               setContextMenu={setContextMenu} rowRefs={rowRefs} ranges={ranges} SECTOR_COLORS={SECTOR_COLORS}
               VARSChart={VARSChart} ValueBar={ValueBar} ABCBadge={ABCBadge} ScoreCell={ScoreCell} SignalBadge={SignalBadge} />
           )}
-          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "mscore" && viewMode !== "trigger" && (
+          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "usthemes" && viewMode !== "mscore" && viewMode !== "trigger" && (
             <div style={{ fontSize: 10, color: TH.textDim, padding: "8px 16px", background: TH.surfaceAlt, position: "sticky", bottom: 0, borderTop: `1px solid ${TH.outlineVar}`, fontFamily: "'Inter', sans-serif", letterSpacing: "0.05em" }}>
               ↑ ↓ Navigate · Real-time Data: Yahoo Finance API · 5min Cache
             </div>

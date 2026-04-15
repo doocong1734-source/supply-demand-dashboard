@@ -1560,6 +1560,61 @@ app.get("/api/naver-themes/refresh", async (req, res) => {
     res.json({ status: "cache cleared", message: "다음 /api/naver-themes 요청 시 재수집됩니다" });
 });
 
+// GET /api/us-theme-quotes  (미국 테마 전광판용 야후파이낸스 시세 - 82그룹 전체)
+const usThemeQuoteCache = new NodeCache({ stdTTL: 300 });
+app.get("/api/us-theme-quotes", async (req, res) => {
+    try {
+        const cached = usThemeQuoteCache.get("quotes");
+        if (cached) return res.json(cached);
+        // 82개 테마 그룹에서 추출한 유니크 티커 (~180개)
+        const tickers = [
+            // 반도체
+            "NVDA","AMD","INTC","AVGO","MRVL","SMCI",
+            "QCOM","ARM","ON","NXPI","STM","ADI","TXN",
+            "WOLF","MCHP","SWKS","QRVO","MU","WDC","STX",
+            "NTAP","AMAT","LRCX","KLAC","CAMT","ENTG","TSM","GFS",
+            // AI/데이터
+            "MSFT","GOOGL","META","AMZN","NOW","CRM","SNOW","DDOG",
+            "PLTR","MDB","SOUN","TTD","SNAP","PINS","ISRG","PATH",
+            "EQIX","DLR","VRT","CRWD","PANW","ZS","S","FTNT","IBM",
+            // 클라우드/SaaS
+            "HUBS","TEAM","ZM","BOX","DOCU","INTU","ADBE","BILL",
+            "GTLB","TWLO","OKTA","SHOP","NET","AKAM","FSLY","DELL","CYBR",
+            // 차세대기술
+            "IONQ","RGTI","QUBT","QBTS","COIN","MARA","RIOT","SQ","PYPL",
+            "V","MA","AXP","AFRM","UPST","AAPL","TSLA","MBLY",
+            "RIVN","LCID","GM","F","AVAV","KTOS","ROK","TER",
+            // 통신/네트워크
+            "JNPR","ANET","CSCO","LITE","AAOI","CIEN","FN","COMM",
+            "IRDM","GSAT","RKLB","VZ","T","TMUS","CMCSA",
+            // 우주/방산
+            "BA","LMT","LHX","NOC","RTX","GD","AXON","BWXT",
+            // 헬스케어
+            "JNJ","PFE","MRK","ABBV","BMY","AMGN","GILD","REGN","BIIB","VRTX",
+            "CRSP","NTLA","BEAM","EDIT","MDT","SYK","BSX","EW",
+            "DHR","TMO","ILMN","LH","DGX","TDOC","VEEV","UNH","CVS","HUM","CI","ELV",
+            // 소비/플랫폼
+            "EBAY","ETSY","WMT","NFLX","DIS","WBD","PARA","ROKU",
+            "EA","TTWO","PG","KO","PEP","CL","LVMUY","RACE","EL","TPR","RL","FANUY",
+            // 산업/에너지
+            "ENPH","FSLR","RUN","SEDG","CSIQ","GE","NEE","BEP",
+            "ALB","SQM","QS","APTV","TE","CEG","CCJ","VST","NRG",
+            "STEM","FLNC","PLUG","FCEL","BE","XOM","CVX","COP","OXY",
+            "CAT","DE","VMC","MLM","JPM","BAC","GS","MS",
+            // 기타 (보안SI)
+            "ACN","DXC","SAIC",
+        ];
+        // 중복 제거
+        const uniqueTickers = [...new Set(tickers)];
+        const result = await fetchYFQuotesBatch(uniqueTickers);
+        usThemeQuoteCache.set("quotes", result);
+        res.json(result);
+    } catch (e) {
+        console.error("/api/us-theme-quotes:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // ─── 프로덕션: React 빌드 정적 파일 서빙 ───────────────────────
 const clientDist = path.join(__dirname, "..", "dist");
 app.use(express.static(clientDist));

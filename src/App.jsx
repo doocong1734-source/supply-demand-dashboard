@@ -1705,7 +1705,7 @@ export default function Dashboard() {
           )}
 
           {/* ── 메인 테이블 뷰 (Stitch Design) ── */}
-          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && data && (
+          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "mscore" && viewMode !== "trigger" && data && (
             <UnifiedTable C={TH} data={data} viewMode={viewMode} collapsed={collapsed} setCollapsed={setCollapsed}
               sortStates={sortStates} handleSort={handleSort} getSortIndicator={getSortIndicator}
               filterRows={filterRows} getSortedRows={getSortedRows} selected={selected} handleSelectRow={handleSelectRow}
@@ -1713,7 +1713,7 @@ export default function Dashboard() {
               setContextMenu={setContextMenu} rowRefs={rowRefs} ranges={ranges} SECTOR_COLORS={SECTOR_COLORS}
               VARSChart={VARSChart} ValueBar={ValueBar} ABCBadge={ABCBadge} ScoreCell={ScoreCell} SignalBadge={SignalBadge} />
           )}
-          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && (
+          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "mscore" && viewMode !== "trigger" && (
             <div style={{ fontSize: 10, color: TH.textDim, padding: "8px 16px", background: TH.surfaceAlt, position: "sticky", bottom: 0, borderTop: `1px solid ${TH.outlineVar}`, fontFamily: "'Inter', sans-serif", letterSpacing: "0.05em" }}>
               ↑ ↓ Navigate · Real-time Data: Yahoo Finance API · 5min Cache
             </div>

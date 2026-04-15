@@ -1437,6 +1437,129 @@ app.post("/api/ai/portfolio-review", async (req, res) => {
     }
 });
 
+// ─── 네이버증권 테마 스크래핑 ─────────────────────────────────
+import * as cheerio from "cheerio";
+import iconv from "iconv-lite";
+
+const themeCache = new NodeCache({ stdTTL: 300 }); // 5분 캐시
+
+async function fetchNaverPage(url) {
+    const r = await axios.get(url, {
+        responseType: "arraybuffer",
+        headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+        timeout: 10000,
+    });
+    return iconv.decode(Buffer.from(r.data), "euc-kr");
+}
+
+function parseRate(text) {
+    const s = (text || "").replace(/,/g, "").replace(/%/g, "").replace(/\s/g, "");
+    return parseFloat(s) || 0;
+}
+
+async function scrapeNaverThemes() {
+    const seen = new Set();
+    const themes = [];
+    for (let page = 1; page <= 8; page++) {
+        try {
+            const html = await fetchNaverPage(`https://finance.naver.com/sise/theme.naver?&page=${page}`);
+            const $ = cheerio.load(html);
+            let newCount = 0;
+            $("table.type_1 tr").each((_, row) => {
+                const tds = $(row).find("td");
+                if (!tds.length) return;
+                const a = $(tds[0]).find("a");
+                if (!a.length) return;
+                const name = a.text().trim();
+                if (!name || seen.has(name)) return;
+                seen.add(name);
+                const href = a.attr("href") || "";
+                const no = href.split("no=")[1] || "";
+                const rateD1 = parseRate($(tds[1]).text());
+                const rate3d = parseRate($(tds[2]).text());
+                const up   = $(tds[4]).text().trim();
+                const flat = $(tds[5]).text().trim();
+                const down = $(tds[6]).text().trim();
+                themes.push({ name, no, href, rate_d1: rateD1, rate_3d: rate3d, up, flat, down });
+                newCount++;
+            });
+            if (newCount === 0) break;
+            await new Promise(r => setTimeout(r, 100));
+        } catch (e) {
+            console.error(`naver theme page ${page}:`, e.message);
+            break;
+        }
+    }
+    themes.sort((a, b) => b.rate_d1 - a.rate_d1);
+    return themes;
+}
+
+async function scrapeThemeStocks(no, limit = 8) {
+    try {
+        const html = await fetchNaverPage(
+            `https://finance.naver.com/sise/sise_group_detail.naver?type=theme&no=${no}`
+        );
+        const $ = cheerio.load(html);
+        const stocks = [];
+        $("table.type_5 tr").each((_, row) => {
+            if (stocks.length >= limit) return false;
+            const tds = $(row).find("td");
+            if (!tds.length) return;
+            const a = $(tds[0]).find("a");
+            if (!a.length) return;
+            const name = a.text().trim().replace(/\*/g, "");
+            const href2 = a.attr("href") || "";
+            const code = href2.split("code=")[1] || "";
+            const price = parseInt(($(tds[2]).text().replace(/,/g, "") || "0")) || 0;
+            const pct = parseRate($(tds[4]).text());
+            stocks.push({ name, code, price, pct });
+        });
+        return stocks;
+    } catch (e) {
+        return [];
+    }
+}
+
+// GET /api/naver-themes
+app.get("/api/naver-themes", async (req, res) => {
+    try {
+        const cached = themeCache.get("themes");
+        if (cached) return res.json(cached);
+
+        const themes = await scrapeNaverThemes();
+
+        // 상위 30개 구성종목 상세 수집
+        const top30 = themes.slice(0, 30);
+        for (const t of top30) {
+            t.stocks = await scrapeThemeStocks(t.no, 8);
+            await new Promise(r => setTimeout(r, 120));
+        }
+        // 나머지는 빈 배열
+        themes.slice(30).forEach(t => { t.stocks = []; });
+
+        const emerging = themes.filter(t => t.rate_d1 >= 5 && t.rate_3d >= 3);
+        emerging.forEach(t => { t.emerging = true; });
+
+        const result = {
+            updatedAt: new Date().toISOString(),
+            total: themes.length,
+            emerging,
+            themes: themes.slice(0, 50),
+        };
+        themeCache.set("themes", result);
+        res.json(result);
+    } catch (e) {
+        console.error("/api/naver-themes:", e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// GET /api/naver-themes/refresh  (강제 재수집)
+app.get("/api/naver-themes/refresh", async (req, res) => {
+    themeCache.del("themes");
+    res.json({ status: "cache cleared", message: "다음 /api/naver-themes 요청 시 재수집됩니다" });
+});
+
 // ─── 프로덕션: React 빌드 정적 파일 서빙 ───────────────────────
 const clientDist = path.join(__dirname, "..", "dist");
 app.use(express.static(clientDist));

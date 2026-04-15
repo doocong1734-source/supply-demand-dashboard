@@ -120,21 +120,22 @@ const METRIC_TOOLTIPS = {
 // TradingView 임베드 위젯
 function TradingViewChart({ ticker }) {
   const containerRef = useRef(null);
-  const scriptRef = useRef(null);
+  const wrapperRef = useRef(null);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    // 기존 콘텐츠 제거
+  const loadWidget = useCallback(() => {
+    if (!containerRef.current || !wrapperRef.current) return;
     containerRef.current.innerHTML = "";
-
+    const w = wrapperRef.current.offsetWidth;
+    const h = wrapperRef.current.offsetHeight;
+    if (w < 10 || h < 10) return;
     const script = document.createElement("script");
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.type = "text/javascript";
     script.async = true;
     script.innerHTML = JSON.stringify({
-      autosize: true,
-      width: "100%",
-      height: "100%",
+      autosize: false,
+      width: w,
+      height: h,
       symbol: ticker.endsWith(".KS") || ticker.endsWith(".KQ") ? `KRX:${ticker.split(".")[0]}` : ticker,
       interval: "D",
       timezone: "Asia/Seoul",
@@ -152,15 +153,23 @@ function TradingViewChart({ ticker }) {
       support_host: "https://www.tradingview.com",
     });
     containerRef.current.appendChild(script);
-    scriptRef.current = script;
-
-    return () => {
-      if (containerRef.current) containerRef.current.innerHTML = "";
-    };
   }, [ticker]);
 
+  useEffect(() => {
+    // 컨테이너 크기 확정 후 로드 (fixed/flex 레이아웃 안정화 대기)
+    const t = setTimeout(loadWidget, 80);
+    return () => { clearTimeout(t); if (containerRef.current) containerRef.current.innerHTML = ""; };
+  }, [loadWidget]);
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    const ro = new ResizeObserver(() => loadWidget());
+    ro.observe(wrapperRef.current);
+    return () => ro.disconnect();
+  }, [loadWidget]);
+
   return (
-    <div style={{ width: "100%", height: "100%", flex: 1, overflow: "hidden", background: TH.bg }}>
+    <div ref={wrapperRef} style={{ width: "100%", height: "100%", flex: 1, overflow: "hidden", background: TH.bg }}>
       <div className="tradingview-widget-container" ref={containerRef} style={{ height: "100%", width: "100%" }} />
     </div>
   );
@@ -1700,7 +1709,15 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{ flex: 1, minWidth: viewMode === "watchlist" ? 320 : 400, maxWidth: viewMode === "watchlist" ? 480 : undefined, display: "flex", flexDirection: "column", borderLeft: detailFullscreen ? "none" : `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden", ...(detailFullscreen ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 } : {}) }}>
+      {viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && selected && <div style={{
+        ...(viewMode === "watchlist"
+          ? { position: "fixed", top: 52, right: 0, width: "48%", bottom: 0, zIndex: 50 }
+          : detailFullscreen
+            ? { position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 100 }
+            : { flex: 1, minWidth: 400 }
+        ),
+        display: "flex", flexDirection: "column", borderLeft: `1px solid ${TH.outlineVar}`, background: TH.surfaceAlt, overflow: "hidden"
+      }}>
           <>
             {/* Header with close + fullscreen */}
             <div style={{ padding: "12px 16px", background: TH.surface, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>

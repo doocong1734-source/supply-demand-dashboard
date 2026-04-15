@@ -1564,23 +1564,36 @@ app.get("/api/naver-themes/refresh", async (req, res) => {
 const usThemeQuoteCache = new NodeCache({ stdTTL: 300 });
 
 // Yahoo Finance v8 chart API (개별 티커, query2 사용시 인증 불필요)
-async function fetchYFChartQuote(symbol) {
+// range: "2d"(1D), "5d"(5D), "1mo"(1M), "3mo"(3M)
+async function fetchYFChartQuote(symbol, range = "2d") {
     const r = await axios.get(`https://query2.finance.yahoo.com/v8/finance/chart/${symbol}`, {
-        params: { interval: "1d", range: "2d", includePrePost: false },
+        params: { interval: "1d", range, includePrePost: false },
         headers: YF_HEADERS,
         timeout: 10000,
     });
     const result = r.data?.chart?.result?.[0];
     if (!result) return null;
     const meta = result.meta;
-    const opens = result.indicators?.quote?.[0]?.open || [];
-    const price = meta.regularMarketPrice || 0;
-    const prevClose = meta.chartPreviousClose || 0;
+    const closes = result.indicators?.quote?.[0]?.close || [];
+    const opens  = result.indicators?.quote?.[0]?.open  || [];
+    const price  = meta.regularMarketPrice || 0;
+    const vol    = meta.regularMarketVolume || 0;
     const todayOpen = opens[opens.length - 1] || price;
-    const vol = meta.regularMarketVolume || 0;
+
+    let changePercent, prevClose;
+    if (range === "2d") {
+        // 1D: 전일 종가 대비
+        prevClose     = meta.chartPreviousClose || 0;
+        changePercent = prevClose > 0 ? ((price - prevClose) / prevClose) * 100 : 0;
+    } else {
+        // 5D/1M/3M: 기간 첫 봉 종가 대비
+        const firstClose = closes.find(c => c != null) || 0;
+        prevClose     = firstClose;
+        changePercent = firstClose > 0 ? ((price - firstClose) / firstClose) * 100 : 0;
+    }
     return {
         price: Math.round(price * 100) / 100,
-        daily: prevClose > 0 ? Math.round(((price - prevClose) / prevClose) * 10000) / 100 : 0,
+        daily: Math.round(changePercent * 100) / 100,
         intra: todayOpen > 0 ? Math.round(((price - todayOpen) / todayOpen) * 10000) / 100 : 0,
         volume: vol,
         darkpool: 0,
@@ -1627,35 +1640,40 @@ const US_THEME_TICKERS = [...new Set([
     "ACN","DXC","SAIC",
 ])];
 
-// 백그라운드 갱신: 10개씩 병렬, 배치 간 500ms 대기 (총 ~10초)
-async function refreshUSThemeQuotes() {
+const US_THEME_VALID_RANGES = ["2d", "5d", "1mo", "3mo"];
+
+// 10개씩 병렬, 배치 간 500ms 대기
+async function refreshUSThemeQuotes(range = "2d") {
     const merged = {};
     const PARALLEL = 10;
     for (let i = 0; i < US_THEME_TICKERS.length; i += PARALLEL) {
         const chunk = US_THEME_TICKERS.slice(i, i + PARALLEL);
-        const results = await Promise.allSettled(chunk.map(t => fetchYFChartQuote(t)));
+        const results = await Promise.allSettled(chunk.map(t => fetchYFChartQuote(t, range)));
         results.forEach((r, j) => {
             if (r.status === "fulfilled" && r.value) merged[chunk[j]] = r.value;
         });
         if (i + PARALLEL < US_THEME_TICKERS.length) await new Promise(r => setTimeout(r, 500));
     }
     if (Object.keys(merged).length > 0) {
-        usThemeQuoteCache.set("quotes", merged);
-        console.log(`✅ US theme quotes 갱신: ${Object.keys(merged).length}개`);
+        usThemeQuoteCache.set(`quotes_${range}`, merged);
+        console.log(`✅ US theme quotes 갱신 [${range}]: ${Object.keys(merged).length}개`);
     }
+    return merged;
 }
 
-// 서버 시작 시 즉시 + 5분마다 갱신
-refreshUSThemeQuotes();
-setInterval(refreshUSThemeQuotes, 5 * 60 * 1000);
+// 서버 시작 시 기본 range(1D) 즉시 + 5분마다 갱신
+refreshUSThemeQuotes("2d");
+setInterval(() => refreshUSThemeQuotes("2d"), 5 * 60 * 1000);
 
 app.get("/api/us-theme-quotes", async (req, res) => {
     try {
-        const cached = usThemeQuoteCache.get("quotes");
+        const range = US_THEME_VALID_RANGES.includes(req.query.range) ? req.query.range : "2d";
+        const cacheKey = `quotes_${range}`;
+        const cached = usThemeQuoteCache.get(cacheKey);
         if (cached && Object.keys(cached).length > 0) return res.json(cached);
-        // 캐시 미스 시 즉시 갱신 후 반환
-        await refreshUSThemeQuotes();
-        res.json(usThemeQuoteCache.get("quotes") || {});
+        // 캐시 미스 시 즉시 조회 후 반환
+        const fresh = await refreshUSThemeQuotes(range);
+        res.json(fresh);
     } catch (e) {
         console.error("/api/us-theme-quotes:", e.message);
         res.status(500).json({ error: e.message });

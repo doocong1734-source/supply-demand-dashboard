@@ -286,21 +286,29 @@ function CategorySection({ cat, groups, quotes, expanded, onToggle }) {
 
 const BASE_URL = window.location.hostname === "localhost" ? "http://localhost:3001" : "";
 
+const US_PERIODS = [
+  { label: "1D",  range: "2d"  },
+  { label: "5D",  range: "5d"  },
+  { label: "1M",  range: "1mo" },
+  { label: "3M",  range: "3mo" },
+];
+
 export default function USThemePanel() {
   const [quotes, setQuotes]       = useState({});
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [range, setRange]         = useState("2d");
   const [expandedCats, setExpandedCats] = useState(() => {
     const init = {};
     US_THEME_GROUPS.forEach(g => { init[g.cat] = true; });
     return init;
   });
 
-  const fetchQuotes = async () => {
+  const fetchQuotes = async (r = range) => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/us-theme-quotes`);
+      const res = await fetch(`${BASE_URL}/api/us-theme-quotes?range=${r}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -314,9 +322,14 @@ export default function USThemePanel() {
     }
   };
 
+  const handleRangeChange = (r) => {
+    setRange(r);
+    fetchQuotes(r);
+  };
+
   useEffect(() => {
-    fetchQuotes();
-    const iv = setInterval(fetchQuotes, 300000);
+    fetchQuotes("2d");
+    const iv = setInterval(() => fetchQuotes(range), 300000);
     return () => clearInterval(iv);
   }, []);
 
@@ -330,14 +343,26 @@ export default function USThemePanel() {
       <TickerTape quotes={quotes} />
 
       {/* 헤더 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
         <div>
           <span style={{ fontSize: 16, fontWeight: 800, color: TH.textBright }}>US 테마 스캐너</span>
           <span style={{ fontSize: 11, color: TH.textDim, marginLeft: 10 }}>
             {US_THEME_GROUPS.length}개 테마 · {Object.keys(quotes).length}종목
           </span>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {/* 기간 선택 */}
+          <div style={{ display: "flex", background: TH.surfaceAlt, borderRadius: 8, border: `1px solid ${TH.border}`, padding: 3, gap: 2 }}>
+            {US_PERIODS.map(p => (
+              <button key={p.range} onClick={() => handleRangeChange(p.range)} style={{
+                padding: "4px 12px", borderRadius: 6, border: "none",
+                background: range === p.range ? TH.blue : "transparent",
+                color: range === p.range ? "#fff" : TH.textDim,
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                transition: "all 0.12s",
+              }}>{p.label}</button>
+            ))}
+          </div>
           {loading && <span style={{ fontSize: 11, color: TH.textDim }}>로딩 중...</span>}
           {error && (
             <span style={{ fontSize: 10, color: TH.red, background: TH.redBg, border: `1px solid ${TH.redBorder}`, padding: "2px 8px", borderRadius: 4 }}>
@@ -348,7 +373,7 @@ export default function USThemePanel() {
             <span style={{ fontSize: 10, color: TH.textDim }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>
           )}
           <button
-            onClick={fetchQuotes}
+            onClick={() => fetchQuotes(range)}
             style={{ fontSize: 11, padding: "4px 12px", background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, color: TH.textDim, cursor: "pointer", boxShadow: TH.shadow }}
           >
             새로고침

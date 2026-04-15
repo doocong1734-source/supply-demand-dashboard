@@ -78,15 +78,11 @@ function StockTag({ stock }) {
   );
 }
 
-function TickerTape({ themes }) {
+function TickerTape({ themes, rateKey = "rate_d1" }) {
   const ref = useRef(null);
-  // 상위 20개 등락률 순으로 표시
   const items = themes.slice(0, 20);
   if (!items.length) return null;
-
-  // 충분히 길게 반복
   const repeated = [...items, ...items, ...items];
-
   return (
     <div style={{
       background: "#1a1d2e", overflow: "hidden", height: 36,
@@ -106,7 +102,7 @@ function TickerTape({ themes }) {
         whiteSpace: "nowrap",
       }}>
         {repeated.map((t, i) => {
-          const v = parseRate(t.rate_d1);
+          const v = parseRate(t[rateKey]);
           const color = v > 0 ? "#4ade80" : v < 0 ? "#f87171" : "#9ca3af";
           return (
             <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0 18px", borderRight: "1px solid #2d3149", height: 36 }}>
@@ -189,6 +185,11 @@ function DetailPanel({ theme, onClose }) {
   );
 }
 
+const KR_PERIODS = [
+  { label: "전일", key: "d1" },
+  { label: "3일",  key: "3d" },
+];
+
 export default function ThemePanel() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -196,6 +197,9 @@ export default function ThemePanel() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const [period, setPeriod] = useState("d1");
+
+  const getRateByPeriod = (t) => period === "d1" ? t.rate_d1 : t.rate_3d;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -216,7 +220,7 @@ export default function ThemePanel() {
 
   const themes = data?.themes || [];
   const filtered = themes.filter(t => {
-    const v = parseRate(t.rate_d1);
+    const v = parseRate(getRateByPeriod(t));
     if (filter === "hot"      && v < 7) return false;
     if (filter === "warm"     && (v < 3 || v >= 7)) return false;
     if (filter === "emerging" && !t.emerging) return false;
@@ -239,14 +243,28 @@ export default function ThemePanel() {
             </p>
           )}
         </div>
-        <button onClick={load} disabled={loading} style={{
-          padding: "7px 16px", borderRadius: 8, border: `1px solid ${TH.border}`,
-          background: TH.surface, color: TH.textDim, fontSize: 12,
-          cursor: loading ? "not-allowed" : "pointer",
-          boxShadow: TH.shadow, fontWeight: 500,
-        }}>
-          {loading ? "수집 중..." : "새로고침"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* 기간 선택 */}
+          <div style={{ display: "flex", background: TH.surfaceAlt, borderRadius: 8, border: `1px solid ${TH.border}`, padding: 3, gap: 2 }}>
+            {KR_PERIODS.map(p => (
+              <button key={p.key} onClick={() => setPeriod(p.key)} style={{
+                padding: "4px 12px", borderRadius: 6, border: "none",
+                background: period === p.key ? TH.blue : "transparent",
+                color: period === p.key ? "#fff" : TH.textDim,
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                transition: "all 0.12s",
+              }}>{p.label}</button>
+            ))}
+          </div>
+          <button onClick={load} disabled={loading} style={{
+            padding: "7px 16px", borderRadius: 8, border: `1px solid ${TH.border}`,
+            background: TH.surface, color: TH.textDim, fontSize: 12,
+            cursor: loading ? "not-allowed" : "pointer",
+            boxShadow: TH.shadow, fontWeight: 500,
+          }}>
+            {loading ? "수집 중..." : "새로고침"}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -262,7 +280,7 @@ export default function ThemePanel() {
         </div>
       )}
 
-      {data && themes.length > 0 && <TickerTape themes={themes} />}
+      {data && themes.length > 0 && <TickerTape themes={themes} rateKey={period === "d1" ? "rate_d1" : "rate_3d"} />}
 
       {data && (
         <>
@@ -374,11 +392,13 @@ export default function ThemePanel() {
                   )}
                 </div>
                 <div style={{ textAlign: "right", paddingTop: 2 }}>
-                  <RateSpan value={t.rate_d1} size={14} />
-                  <div style={{ fontSize: 10, color: TH.textDim, marginTop: 3 }}>3일 <RateSpan value={t.rate_3d} size={10} /></div>
+                  <RateSpan value={getRateByPeriod(t)} size={14} />
+                  <div style={{ fontSize: 10, color: TH.textDim, marginTop: 3 }}>
+                    {period === "d1" ? "3일" : "전일"} <RateSpan value={period === "d1" ? t.rate_3d : t.rate_d1} size={10} />
+                  </div>
                 </div>
                 <div style={{ textAlign: "right", paddingTop: 2 }}>
-                  <HeatBadge rate={t.rate_d1} />
+                  <HeatBadge rate={getRateByPeriod(t)} />
                 </div>
               </div>
             ))}

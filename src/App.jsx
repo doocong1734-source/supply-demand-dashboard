@@ -137,7 +137,7 @@ function TradingViewChart({ ticker }) {
       autosize: false,
       width: w,
       height: h,
-      symbol: ticker.endsWith(".KS") || ticker.endsWith(".KQ") ? `KRX:${ticker.split(".")[0]}` : ticker,
+      symbol: ticker.endsWith(".KS") ? `KRX:${ticker.split(".")[0]}` : ticker.endsWith(".KQ") ? `KOSDAQ:${ticker.split(".")[0]}` : ticker,
       interval: "D",
       timezone: "Asia/Seoul",
       theme: "dark",

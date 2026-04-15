@@ -1562,11 +1562,41 @@ app.get("/api/naver-themes/refresh", async (req, res) => {
 
 // GET /api/us-theme-quotes  (미국 테마 전광판용 야후파이낸스 시세 - 82그룹 전체)
 const usThemeQuoteCache = new NodeCache({ stdTTL: 300 });
+
+// crumb 인증을 사용하는 배치 조회 (일반 fetchYFQuotesBatch와 달리 cookie+crumb 포함)
+async function fetchYFQuotesBatchAuth(tickers) {
+    const auth = await getYFAuth();
+    const fields = ["regularMarketPrice","regularMarketChangePercent","regularMarketOpen","regularMarketVolume","averageDailyVolume3Month"].join(",");
+    const headers = { ...YF_HEADERS };
+    if (auth.cookie) headers["Cookie"] = auth.cookie;
+    const params = { symbols: tickers.join(","), fields };
+    if (auth.crumb) params.crumb = auth.crumb;
+    const r = await axios.get("https://query1.finance.yahoo.com/v7/finance/quote", {
+        headers, params, timeout: 15000,
+    });
+    const out = {};
+    for (const q of (r.data?.quoteResponse?.result || [])) {
+        const price = q.regularMarketPrice || 0;
+        const open  = q.regularMarketOpen  || price;
+        const vol   = q.regularMarketVolume || 0;
+        const avgV  = q.averageDailyVolume3Month || 1;
+        out[q.symbol] = {
+            price: Math.round(price * 100) / 100,
+            daily: Math.round((q.regularMarketChangePercent || 0) * 100) / 100,
+            intra: open > 0 ? Math.round(((price - open) / open) * 10000) / 100 : 0,
+            volume: vol,
+            darkpool: Math.round(Math.min(100, Math.max(0, (vol / Math.max(avgV, 1)) * 20)) * 10) / 10,
+            shortInt: null, open, prevClose: 0,
+        };
+    }
+    return out;
+}
+
 app.get("/api/us-theme-quotes", async (req, res) => {
     try {
         const cached = usThemeQuoteCache.get("quotes");
         if (cached) return res.json(cached);
-        // 82개 테마 그룹에서 추출한 유니크 티커 (~180개)
+
         const tickers = [...new Set([
             // 반도체
             "NVDA","AMD","INTC","AVGO","MRVL","SMCI",
@@ -1601,17 +1631,22 @@ app.get("/api/us-theme-quotes", async (req, res) => {
             "ALB","SQM","QS","APTV","TE","CEG","CCJ","VST","NRG",
             "STEM","FLNC","PLUG","FCEL","BE","XOM","CVX","COP","OXY",
             "CAT","DE","VMC","MLM","JPM","BAC","GS","MS",
-            // 기타 (보안SI)
             "ACN","DXC","SAIC",
         ])];
-        // Yahoo Finance v7: 한번에 너무 많은 티커 시 401 오류 → 50개씩 청크 처리
-        const CHUNK = 50;
-        const chunks = [];
+
+        // 25개씩 순차 처리 (rate-limit 방지, crumb 인증 포함)
+        const CHUNK = 25;
+        const merged = {};
         for (let i = 0; i < tickers.length; i += CHUNK) {
-            chunks.push(tickers.slice(i, i + CHUNK));
+            const chunk = tickers.slice(i, i + CHUNK);
+            try {
+                const result = await fetchYFQuotesBatchAuth(chunk);
+                Object.assign(merged, result);
+            } catch (e) {
+                console.warn(`us-theme chunk[${i}] 실패:`, e.message);
+            }
+            if (i + CHUNK < tickers.length) await new Promise(r => setTimeout(r, 300));
         }
-        const results = await Promise.all(chunks.map(chunk => fetchYFQuotesBatch(chunk)));
-        const merged = Object.assign({}, ...results);
         usThemeQuoteCache.set("quotes", merged);
         res.json(merged);
     } catch (e) {

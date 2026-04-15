@@ -1,5 +1,32 @@
 import { useState, useEffect } from "react";
 
+// ── ThemePanel과 동일한 라이트 테마 ────────────────────────────────────
+const TH = {
+  bg: "#f5f6fa",
+  surface: "#ffffff",
+  surfaceAlt: "#f8f9fc",
+  surfaceHigh: "#eef0f7",
+  border: "#e2e5ef",
+  borderLight: "#eceef6",
+  text: "#1a1d2e",
+  textDim: "#6b7280",
+  textBright: "#0f1120",
+  green: "#059669",
+  greenBg: "#ecfdf5",
+  greenBorder: "#a7f3d0",
+  red: "#dc2626",
+  redBg: "#fef2f2",
+  redBorder: "#fca5a5",
+  blue: "#2563eb",
+  blueBg: "#eff6ff",
+  blueBorder: "#bfdbfe",
+  yellow: "#d97706",
+  yellowBg: "#fffbeb",
+  yellowBorder: "#fde68a",
+  shadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+  shadowMd: "0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05)",
+};
+
 // ─── US 테마 그룹 정의 (10개 카테고리, 82개 테마) ─────────────────────────
 const US_THEME_GROUPS = [
   // ① 반도체
@@ -16,7 +43,7 @@ const US_THEME_GROUPS = [
   { cat: "반도체", name: "FPGA", tickers: ["AMD","INTC","MCHP"] },
   { cat: "반도체", name: "장비증착", tickers: ["AMAT","LRCX"] },
   { cat: "반도체", name: "장비검사", tickers: ["KLAC","CAMT"] },
-  { cat: "반도체", name: "반도체소재", tickers: ["ENTG","CMC","CREE"] },
+  { cat: "반도체", name: "반도체소재", tickers: ["ENTG"] },
   { cat: "반도체", name: "파운드리", tickers: ["TSM","GFS"] },
   // ② AI/데이터
   { cat: "AI/데이터", name: "생성형AI", tickers: ["MSFT","GOOGL","META","AMZN"] },
@@ -57,7 +84,7 @@ const US_THEME_GROUPS = [
   { cat: "차세대기술", name: "자율주행", tickers: ["TSLA","MBLY"] },
   { cat: "차세대기술", name: "전기차", tickers: ["TSLA","RIVN","LCID","GM","F"] },
   { cat: "차세대기술", name: "드론", tickers: ["AVAV","KTOS"] },
-  { cat: "차세대기술", name: "로봇자동화", tickers: ["ROK","TER","ISRG","FANUY"] },
+  { cat: "차세대기술", name: "로봇자동화", tickers: ["ROK","TER","ISRG"] },
   // ⑥ 통신/네트워크
   { cat: "통신/네트워크", name: "5G칩", tickers: ["QCOM","SWKS","QRVO"] },
   { cat: "통신/네트워크", name: "통신장비", tickers: ["CSCO","JNPR","ANET"] },
@@ -112,7 +139,7 @@ const CATEGORY_COLORS = {
   "사이버보안":   "#dc2626",
   "차세대기술":   "#d97706",
   "통신/네트워크":"#059669",
-  "우주/방산":    "#1d4ed8",
+  "우주/방산":    "#1e40af",
   "헬스케어":     "#db2777",
   "소비/플랫폼":  "#ea580c",
   "산업/에너지":  "#65a30d",
@@ -124,30 +151,35 @@ function calcGroupAvg(group, quotes) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-function pctColor(v) {
-  if (v == null) return "#9ca3af";
-  return v > 0 ? "#4ade80" : v < 0 ? "#f87171" : "#9ca3af";
+function RateSpan({ value, size = 13 }) {
+  const v = value ?? 0;
+  const color = v > 0 ? TH.green : v < 0 ? TH.red : TH.textDim;
+  return (
+    <span style={{ color, fontWeight: 700, fontSize: size, fontFamily: "'Inter', monospace" }}>
+      {v > 0 ? "+" : ""}{v.toFixed(2)}%
+    </span>
+  );
 }
 
+// KR테마와 동일한 다크 전광판 (대비 효과)
 function TickerTape({ quotes }) {
-  const items = US_THEME_GROUPS.map(g => ({ ...g, avg: calcGroupAvg(g, quotes) }))
+  const items = US_THEME_GROUPS
+    .map(g => ({ ...g, avg: calcGroupAvg(g, quotes) }))
     .filter(g => g.avg != null);
-  if (!items.length) {
-    return <div style={{ height: 36, background: "#070d1a", borderBottom: "1px solid #1e2a4a" }} />;
-  }
+  if (!items.length) return null;
   const repeated = [...items, ...items, ...items];
   return (
-    <div style={{ background: "#070d1a", overflow: "hidden", height: 36, display: "flex", alignItems: "center", borderBottom: "1px solid #1e2a4a", position: "sticky", top: 0, zIndex: 10 }}>
+    <div style={{ background: "#1a1d2e", overflow: "hidden", height: 36, display: "flex", alignItems: "center", borderBottom: `1px solid ${TH.border}`, marginBottom: 20, borderRadius: 8 }}>
       <style>{`@keyframes usTickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-33.333%); } }`}</style>
-      <div style={{ display: "flex", animation: "usTickerScroll 80s linear infinite", whiteSpace: "nowrap" }}>
+      <div style={{ display: "flex", animation: "usTickerScroll 60s linear infinite", whiteSpace: "nowrap" }}>
         {repeated.map((g, i) => {
+          const color = g.avg > 0 ? "#4ade80" : g.avg < 0 ? "#f87171" : "#9ca3af";
           const catColor = CATEGORY_COLORS[g.cat] || "#9ca3af";
-          const vc = pctColor(g.avg);
           return (
-            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0 14px", borderRight: "1px solid #1e2a4a", height: 36 }}>
-              <span style={{ fontSize: 9, fontWeight: 600, color: catColor, opacity: 0.9, letterSpacing: "0.03em" }}>{g.cat.split("/")[0]}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0" }}>{g.name}</span>
-              <span style={{ fontSize: 12, fontWeight: 800, color: vc, fontFamily: "monospace" }}>
+            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0 16px", borderRight: "1px solid #2d3149", height: 36 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: catColor, opacity: 0.85 }}>{g.cat.split("/")[0]}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{g.name}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color, fontFamily: "monospace" }}>
                 {g.avg > 0 ? "+" : ""}{g.avg.toFixed(2)}%
               </span>
             </span>
@@ -159,33 +191,35 @@ function TickerTape({ quotes }) {
 }
 
 function GroupCard({ group, quotes }) {
-  const catColor = CATEGORY_COLORS[group.cat] || "#9ca3af";
   const avg = calcGroupAvg(group, quotes);
-  const avgColor = pctColor(avg);
-
+  const up  = avg != null && avg > 0;
+  const dn  = avg != null && avg < 0;
   return (
-    <div style={{ background: "#0d1526", border: "1px solid #1e2a4a", borderRadius: 8, padding: "10px 12px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, borderBottom: "1px solid #1e2a4a", paddingBottom: 6 }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: catColor }}>{group.name}</span>
-        {avg != null && (
-          <span style={{ fontSize: 13, fontWeight: 800, color: avgColor, fontFamily: "monospace" }}>
-            {avg > 0 ? "+" : ""}{avg.toFixed(2)}%
-          </span>
-        )}
+    <div style={{
+      background: TH.surface,
+      border: `1px solid ${up ? TH.greenBorder : dn ? TH.redBorder : TH.border}`,
+      borderRadius: 10, padding: "12px 14px",
+      boxShadow: TH.shadow,
+    }}>
+      {/* 그룹 헤더 */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${TH.borderLight}` }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: TH.textBright }}>{group.name}</span>
+        {avg != null && <RateSpan value={avg} size={13} />}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      {/* 개별 종목 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         {group.tickers.map(ticker => {
           const q = quotes[ticker];
           const d = q?.daily;
-          const vc = pctColor(d);
+          const tc = d == null ? TH.textDim : d > 0 ? TH.green : d < 0 ? TH.red : TH.textDim;
           return (
             <div key={ticker} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b", fontFamily: "monospace" }}>{ticker}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: TH.textDim, fontFamily: "monospace" }}>{ticker}</span>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {q?.price != null && (
-                  <span style={{ fontSize: 10, color: "#475569", fontFamily: "monospace" }}>${q.price.toLocaleString()}</span>
+                  <span style={{ fontSize: 10, color: "#9ca3af", fontFamily: "monospace" }}>${q.price.toLocaleString()}</span>
                 )}
-                <span style={{ fontSize: 11, fontWeight: 700, color: vc, fontFamily: "monospace", minWidth: 54, textAlign: "right" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: tc, fontFamily: "monospace", minWidth: 54, textAlign: "right" }}>
                   {d == null ? "—" : `${d > 0 ? "+" : ""}${d.toFixed(2)}%`}
                 </span>
               </div>
@@ -198,10 +232,11 @@ function GroupCard({ group, quotes }) {
 }
 
 function CategorySection({ cat, groups, quotes, expanded, onToggle }) {
-  const catColor = CATEGORY_COLORS[cat] || "#9ca3af";
+  const catColor = CATEGORY_COLORS[cat] || TH.blue;
   const allDailies = groups.flatMap(g => g.tickers.map(t => quotes[t]?.daily).filter(v => v != null));
   const catAvg = allDailies.length ? allDailies.reduce((a, b) => a + b, 0) / allDailies.length : null;
-  const catAvgColor = pctColor(catAvg);
+  const up = catAvg != null && catAvg > 0;
+  const dn = catAvg != null && catAvg < 0;
 
   return (
     <div style={{ marginBottom: 12 }}>
@@ -209,35 +244,40 @@ function CategorySection({ cat, groups, quotes, expanded, onToggle }) {
         onClick={onToggle}
         style={{
           display: "flex", alignItems: "center", gap: 10,
-          padding: "8px 14px", background: "#0d1526",
-          border: `1px solid ${catColor}35`, borderRadius: expanded ? "6px 6px 0 0" : 6,
+          padding: "9px 14px",
+          background: TH.surface,
+          border: `1px solid ${TH.border}`,
+          borderRadius: expanded ? "8px 8px 0 0" : 8,
           cursor: "pointer", userSelect: "none",
+          boxShadow: TH.shadow,
         }}
       >
         <span style={{ width: 3, height: 16, background: catColor, borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: catColor, minWidth: 100 }}>{cat}</span>
-        <span style={{ fontSize: 11, color: "#475569" }}>{groups.length}개 테마</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: catColor, minWidth: 110 }}>{cat}</span>
+        <span style={{ fontSize: 11, color: TH.textDim }}>{groups.length}개 테마</span>
         {catAvg != null && (
-          <span style={{ fontSize: 12, fontWeight: 800, color: catAvgColor, marginLeft: "auto", marginRight: 6, fontFamily: "monospace" }}>
+          <span style={{
+            marginLeft: "auto", marginRight: 6,
+            fontSize: 13, fontWeight: 800,
+            color: up ? TH.green : dn ? TH.red : TH.textDim,
+            fontFamily: "monospace",
+          }}>
             {catAvg > 0 ? "+" : ""}{catAvg.toFixed(2)}%
           </span>
         )}
-        <span style={{ color: "#475569", fontSize: 11 }}>{expanded ? "▲" : "▼"}</span>
+        <span style={{ color: TH.textDim, fontSize: 11 }}>{expanded ? "▲" : "▼"}</span>
       </div>
       {expanded && (
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
-          gap: 8,
-          padding: 10,
-          background: "#09101e",
-          border: `1px solid ${catColor}20`,
+          gridTemplateColumns: "repeat(auto-fill, minmax(215px, 1fr))",
+          gap: 8, padding: 10,
+          background: TH.surfaceAlt,
+          border: `1px solid ${TH.border}`,
           borderTop: "none",
-          borderRadius: "0 0 6px 6px",
+          borderRadius: "0 0 8px 8px",
         }}>
-          {groups.map(group => (
-            <GroupCard key={group.name} group={group} quotes={quotes} />
-          ))}
+          {groups.map(g => <GroupCard key={g.name} group={g} quotes={quotes} />)}
         </div>
       )}
     </div>
@@ -247,9 +287,9 @@ function CategorySection({ cat, groups, quotes, expanded, onToggle }) {
 const BASE_URL = window.location.hostname === "localhost" ? "http://localhost:3001" : "";
 
 export default function USThemePanel() {
-  const [quotes, setQuotes] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [quotes, setQuotes]       = useState({});
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [expandedCats, setExpandedCats] = useState(() => {
     const init = {};
@@ -258,6 +298,7 @@ export default function USThemePanel() {
   });
 
   const fetchQuotes = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${BASE_URL}/api/us-theme-quotes`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -280,62 +321,62 @@ export default function USThemePanel() {
   }, []);
 
   const categories = [...new Set(US_THEME_GROUPS.map(g => g.cat))];
-  const toggleCat = cat => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
+  const toggleCat  = cat => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
+  const allExpanded = categories.every(c => expandedCats[c] !== false);
 
   return (
-    <div style={{ background: "#060e1c", minHeight: "100%", fontFamily: "'Inter', 'Noto Sans KR', sans-serif" }}>
-      {/* 전광판 */}
+    <div style={{ background: TH.bg, minHeight: "100%", fontFamily: "'Inter', 'Noto Sans KR', sans-serif", padding: "20px 20px 40px" }}>
+      {/* 전광판 (KR테마와 동일 스타일) */}
       <TickerTape quotes={quotes} />
 
       {/* 헤더 */}
-      <div style={{ padding: "12px 20px 10px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1e2a4a" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <span style={{ fontSize: 15, fontWeight: 800, color: "#e2e8f0", letterSpacing: "-0.02em" }}>US 테마 스캐너</span>
-          <span style={{ fontSize: 11, color: "#475569", marginLeft: 10 }}>
-            {US_THEME_GROUPS.length}개 테마 · {Object.keys(quotes).length}개 종목
+          <span style={{ fontSize: 16, fontWeight: 800, color: TH.textBright }}>US 테마 스캐너</span>
+          <span style={{ fontSize: 11, color: TH.textDim, marginLeft: 10 }}>
+            {US_THEME_GROUPS.length}개 테마 · {Object.keys(quotes).length}종목
           </span>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {loading && <span style={{ fontSize: 11, color: "#64748b" }}>로딩 중...</span>}
-          {error && <span style={{ fontSize: 10, color: "#f87171" }}>오류: {error}</span>}
-          {lastUpdated && !loading && (
-            <span style={{ fontSize: 10, color: "#475569" }}>
-              {lastUpdated.toLocaleTimeString("ko-KR")}
+          {loading && <span style={{ fontSize: 11, color: TH.textDim }}>로딩 중...</span>}
+          {error && (
+            <span style={{ fontSize: 10, color: TH.red, background: TH.redBg, border: `1px solid ${TH.redBorder}`, padding: "2px 8px", borderRadius: 4 }}>
+              오류: {error}
             </span>
+          )}
+          {lastUpdated && !loading && (
+            <span style={{ fontSize: 10, color: TH.textDim }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>
           )}
           <button
             onClick={fetchQuotes}
-            style={{ fontSize: 11, padding: "3px 10px", background: "#0d1526", border: "1px solid #1e2a4a", borderRadius: 4, color: "#94a3b8", cursor: "pointer" }}
+            style={{ fontSize: 11, padding: "4px 12px", background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, color: TH.textDim, cursor: "pointer", boxShadow: TH.shadow }}
           >
             새로고침
           </button>
           <button
-            onClick={() => setExpandedCats(prev => {
-              const allExpanded = categories.every(c => prev[c] !== false);
+            onClick={() => setExpandedCats(() => {
               const next = {};
               categories.forEach(c => { next[c] = !allExpanded; });
               return next;
             })}
-            style={{ fontSize: 11, padding: "3px 10px", background: "#0d1526", border: "1px solid #1e2a4a", borderRadius: 4, color: "#94a3b8", cursor: "pointer" }}
+            style={{ fontSize: 11, padding: "4px 12px", background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, color: TH.textDim, cursor: "pointer", boxShadow: TH.shadow }}
           >
-            전체 {categories.every(c => expandedCats[c] !== false) ? "접기" : "펼치기"}
+            {allExpanded ? "전체 접기" : "전체 펼치기"}
           </button>
         </div>
       </div>
 
-      {/* 카테고리별 테마 그리드 */}
-      <div style={{ padding: "12px 20px 24px" }}>
-        {categories.map(cat => (
-          <CategorySection
-            key={cat}
-            cat={cat}
-            groups={US_THEME_GROUPS.filter(g => g.cat === cat)}
-            quotes={quotes}
-            expanded={expandedCats[cat] !== false}
-            onToggle={() => toggleCat(cat)}
-          />
-        ))}
-      </div>
+      {/* 카테고리별 섹션 */}
+      {categories.map(cat => (
+        <CategorySection
+          key={cat}
+          cat={cat}
+          groups={US_THEME_GROUPS.filter(g => g.cat === cat)}
+          quotes={quotes}
+          expanded={expandedCats[cat] !== false}
+          onToggle={() => toggleCat(cat)}
+        />
+      ))}
     </div>
   );
 }

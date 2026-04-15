@@ -1,0 +1,265 @@
+// @version=5
+// dhkim Strategy Indicator v1.2
+// Trend 방향 + RS 강도 + 매매 규칙 통합 Dashboard
+// v1.2: BB, VWAP, Stochastic, CMF 차트 표시 추가
+// 손절: -4%(50%), -8%(나머지) | 스윙 트레이딩 | 시장주도주
+
+indicator("dhkim Strategy v1.2", overlay=true, max_boxes_count=100, max_labels_count=500)
+
+// ====== INPUT: 전략 설정 ======
+grp_main = "===== dhkim 전략 설정 ====="
+sl1_pct     = input.float(4.0,  "1차 손절 %",      minval=1, maxval=20, group=grp_main)
+sl1_size    = input.float(50.0, "1차 손절 비율 %",  minval=10, maxval=100, group=grp_main)
+sl2_pct     = input.float(8.0,  "2차 손절 %",      minval=1, maxval=30, group=grp_main)
+tp_pct      = input.float(15.0, "익절 목표 %",      minval=5, maxval=100, group=grp_main)
+
+grp_trend = "===== Trend 분석 ====="
+ema_fast    = input.int(10,  "EMA Fast",  minval=2, group=grp_trend)
+ema_mid     = input.int(21,  "EMA Mid",   minval=2, group=grp_trend)
+ema_slow    = input.int(50,  "EMA Slow",  minval=2, group=grp_trend)
+ema_base    = input.int(200, "EMA Base",  minval=50, group=grp_trend)
+show_ema    = input.bool(true, "EMA 라인 표시", group=grp_trend)
+
+grp_rs = "===== RS 상대강도 ====="
+rs_bench    = input.symbol("SPY", "벤치마크", group=grp_rs)
+rs_period   = input.int(63, "RS 기간 (일)", minval=10, group=grp_rs)
+
+grp_signal = "===== 시그널 설정 ====="
+rsi_len     = input.int(14, "RSI 기간", minval=2, group=grp_signal)
+macd_fast   = input.int(12, "MACD Fast", group=grp_signal)
+macd_slow   = input.int(26, "MACD Slow", group=grp_signal)
+macd_sig    = input.int(9,  "MACD Signal", group=grp_signal)
+vol_mult    = input.float(1.5, "Volume 이상 배수", minval=1.0, group=grp_signal)
+adx_len     = input.int(14, "ADX 기간", minval=5, group=grp_signal)
+adx_threshold = input.int(20, "ADX Trend 임계값", minval=10, group=grp_signal)
+
+grp_bb = "===== Bollinger Band ====="
+show_bb     = input.bool(false, "BB 표시", group=grp_bb)
+bb_len      = input.int(20, "BB 기간", minval=1, group=grp_bb)
+bb_mult     = input.float(2.0, "BB 표준편차", minval=0.5, maxval=5.0, group=grp_bb)
+
+grp_vwap = "===== VWAP ====="
+show_vwap   = input.bool(true, "VWAP 표시", group=grp_vwap)
+
+grp_stoch = "===== Stochastic ====="
+stoch_k     = input.int(14, "Stoch %K", minval=1, group=grp_stoch)
+stoch_d     = input.int(3, "Stoch %D", minval=1, group=grp_stoch)
+stoch_smooth = input.int(3, "Stoch Smooth", minval=1, group=grp_stoch)
+
+grp_cmf = "===== Chaikin Money Flow ====="
+cmf_len     = input.int(20, "CMF 기간", minval=1, group=grp_cmf)
+
+grp_dash = "===== Dashboard ====="
+show_dash   = input.bool(true, "Dashboard 표시", group=grp_dash)
+show_levels = input.bool(true, "TP/SL 레벨 표시", group=grp_dash)
+
+// ====== 기존 지표 계산 ======
+e_fast = ta.ema(close, ema_fast)
+e_mid  = ta.ema(close, ema_mid)
+e_slow = ta.ema(close, ema_slow)
+e_base = ta.ema(close, ema_base)
+rsi_val = ta.rsi(close, rsi_len)
+[macd_line, signal_line, hist_line] = ta.macd(close, macd_fast, macd_slow, macd_sig)
+[di_plus, di_minus, adx_val] = ta.dmi(adx_len, adx_len)
+avg_vol = ta.sma(volume, 20)
+vol_surge = volume > avg_vol * vol_mult
+
+// ====== 신규 지표 계산 ======
+// Bollinger Band
+bb_basis = ta.sma(close, bb_len)
+bb_dev   = bb_mult * ta.stdev(close, bb_len)
+bb_upper = bb_basis + bb_dev
+bb_lower = bb_basis - bb_dev
+bb_pct   = (close - bb_lower) / (bb_upper - bb_lower) * 100
+
+// VWAP
+vwap_val = ta.vwap(hlc3)
+
+// Stochastic
+stoch_raw_k = ta.sma(ta.stoch(close, high, low, stoch_k), stoch_smooth)
+stoch_raw_d = ta.sma(stoch_raw_k, stoch_d)
+
+// Chaikin Money Flow
+cmf_mfm = ((close - low) - (high - close)) / (high - low)
+cmf_mfv = cmf_mfm * volume
+cmf_val = ta.sma(cmf_mfv, cmf_len) / ta.sma(volume, cmf_len)
+
+// ====== RS vs Benchmark ======
+bench_close = request.security(rs_bench, timeframe.period, close)
+rs_raw = (close / bench_close) * 100
+rs_ma  = ta.sma(rs_raw, rs_period)
+rs_rising = rs_raw > rs_ma and rs_raw > rs_raw[5]
+stock_perf = (close - close[252]) / close[252] * 100
+bench_perf = (bench_close - bench_close[252]) / bench_close[252] * 100
+rs_12m = stock_perf - bench_perf
+
+// ====== TREND DIRECTION (7개 조건 체크) ======
+trend_score = 0
+trend_score += (close > e_fast ? 1 : -1)
+trend_score += (close > e_mid  ? 1 : -1)
+trend_score += (close > e_slow ? 1 : -1)
+trend_score += (close > e_base ? 1 : -1)
+trend_score += (e_fast > e_mid ? 1 : -1)
+trend_score += (e_mid > e_slow ? 1 : -1)
+trend_score += (e_slow > e_base ? 1 : -1)
+
+trend_dir = trend_score >= 5 ? 2 : trend_score >= 2 ? 1 : trend_score <= -5 ? -2 : trend_score <= -2 ? -1 : 0
+
+// ====== STRENGTH SCORE (0~100) ======
+strength = 0.0
+// Trend (30점): EMA 정배열 강도
+strength += math.max(0, trend_score) * 4.3
+// RS (25점): 상대강도 상승 + 12개월 초과수익
+rs_score_val = rs_rising ? 15.0 : 0.0
+rs_score_val += rs_12m > 20 ? 10.0 : rs_12m > 0 ? 5.0 : 0.0
+strength += rs_score_val
+// RSI (15점): 50~80 구간 = 건강한 상승
+strength += rsi_val > 50 and rsi_val < 80 ? 15.0 : rsi_val > 40 ? 8.0 : 0.0
+// MACD (15점): 골든크로스 + 히스토그램 상승
+strength += macd_line > signal_line ? 10.0 : 0.0
+strength += hist_line > hist_line[1] ? 5.0 : 0.0
+// Volume (10점): 평균 대비 거래량
+strength += vol_surge ? 10.0 : volume > avg_vol ? 5.0 : 0.0
+// ADX (5점): 추세 강도
+strength += adx_val > adx_threshold ? 5.0 : 0.0
+strength := math.min(strength, 100)
+
+// ====== GRADE ======
+grade = strength >= 80 ? "A+" : strength >= 65 ? "A" : strength >= 50 ? "B+" : strength >= 35 ? "B" : strength >= 20 ? "C" : "D"
+grade_color = strength >= 80 ? color.green : strength >= 65 ? color.lime : strength >= 50 ? color.yellow : strength >= 35 ? color.orange : color.red
+
+// ====== 매매 시그널 (dhkim 규칙) ======
+buy_signal = strength >= 50 and trend_dir >= 1 and rs_rising and rsi_val > 45 and rsi_val < 75 and macd_line > signal_line and close > e_slow
+strong_buy = strength >= 65 and trend_dir >= 2 and rs_rising and vol_surge and close > e_base and adx_val > adx_threshold
+sell_signal = trend_dir <= -1 and not rs_rising and (rsi_val < 30 or macd_line < signal_line) and close < e_slow
+
+// ====== POSITION TRACKING ======
+var float entry_price = na
+var bool in_position = false
+if (buy_signal or strong_buy) and not in_position
+    entry_price := close
+    in_position := true
+if in_position
+    sl2_level = entry_price * (1 - sl2_pct / 100)
+    tp_level  = entry_price * (1 + tp_pct / 100)
+    if close <= sl2_level or close >= tp_level or sell_signal
+        in_position := false
+        entry_price := na
+
+// ====== VISUAL: EMA Lines ======
+plot(show_ema ? e_fast : na, "EMA 10",  color=color.new(color.yellow, 30), linewidth=1)
+plot(show_ema ? e_mid  : na, "EMA 21",  color=color.new(color.orange, 30), linewidth=1)
+plot(show_ema ? e_slow : na, "EMA 50",  color=color.new(color.blue, 30),   linewidth=2)
+plot(show_ema ? e_base : na, "EMA 200", color=color.new(color.purple, 30), linewidth=2)
+
+// ====== VISUAL: Bollinger Band ======
+plot(show_bb ? bb_upper : na, "BB Upper", color=color.new(color.teal, 60), linewidth=1)
+plot(show_bb ? bb_basis : na, "BB Mid",   color=color.new(color.teal, 70), linewidth=1, style=plot.style_circles)
+plot(show_bb ? bb_lower : na, "BB Lower", color=color.new(color.teal, 60), linewidth=1)
+bb_fill_upper = plot(show_bb ? bb_upper : na, display=display.none)
+bb_fill_lower = plot(show_bb ? bb_lower : na, display=display.none)
+fill(bb_fill_upper, bb_fill_lower, color=color.new(color.teal, 92), title="BB Fill")
+
+// ====== VISUAL: VWAP ======
+plot(show_vwap and not timeframe.isdwm ? vwap_val : na, "VWAP", color=color.new(#2962FF, 20), linewidth=2, style=plot.style_stepline)
+
+// ====== ENTRY/EXIT 시그널 (포지션 중복 방지) ======
+enter_long = (buy_signal or strong_buy) and not in_position[1]
+exit_long  = in_position[1] and not in_position
+
+// ====== VISUAL: Signals ======
+plotshape(enter_long and strong_buy, style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 0), size=size.normal, text="STRONG BUY")
+plotshape(enter_long and not strong_buy, style=shape.labelup, location=location.belowbar, color=color.new(color.lime, 0), size=size.small, text="BUY")
+plotshape(exit_long, style=shape.labeldown, location=location.abovebar, color=color.new(color.red, 0), size=size.small, text="EXIT")
+
+// ====== VISUAL: TP/SL Levels ======
+plot(show_levels and in_position ? entry_price * (1 + tp_pct / 100) : na, "TP", color=color.new(color.green, 50), style=plot.style_linebr, linewidth=2)
+plot(show_levels and in_position ? entry_price * (1 - sl1_pct / 100) : na, "SL1 (-4%)", color=color.new(color.orange, 50), style=plot.style_linebr, linewidth=1)
+plot(show_levels and in_position ? entry_price * (1 - sl2_pct / 100) : na, "SL2 (-8%)", color=color.new(color.red, 50), style=plot.style_linebr, linewidth=2)
+
+// ====== VISUAL: Volume Highlight (배경색) ======
+bgcolor(vol_surge ? color.new(color.lime, 75) : volume > avg_vol ? color.new(color.yellow, 85) : na, title="Volume BG")
+
+// ====== VISUAL: RSI Zones (배경색) ======
+bgcolor(rsi_val > 70 ? color.new(color.red, 80) : rsi_val < 30 ? color.new(color.green, 80) : na, title="RSI Zone BG")
+
+// ====== BAR COLOR ======
+barcolor(strong_buy ? color.new(color.green, 50) : sell_signal ? color.new(color.red, 50) : na)
+
+// ====== DASHBOARD TABLE ======
+if barstate.islast and show_dash
+    var table dash = table.new(position.top_right, 2, 14, border_color=color.gray, frame_width=1)
+    trend_label = trend_dir == 2 ? "STRONG UP" : trend_dir == 1 ? "UP" : trend_dir == -2 ? "STRONG DOWN" : trend_dir == -1 ? "DOWN" : "NEUTRAL"
+    trend_color = trend_dir >= 2 ? color.green : trend_dir >= 1 ? color.lime : trend_dir <= -2 ? color.red : trend_dir <= -1 ? color.orange : color.gray
+
+    table.cell(dash, 0, 0, "dhkim Strategy", text_color=color.white, bgcolor=color.new(color.blue, 40), text_size=size.normal)
+    table.cell(dash, 1, 0, "v1.2", text_color=color.white, bgcolor=color.new(color.blue, 40), text_size=size.normal)
+
+    table.cell(dash, 0, 1, "Grade", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 1, grade + " (" + str.tostring(math.round(strength, 0)) + ")", text_color=grade_color, bgcolor=color.new(color.navy, 70), text_size=size.normal)
+
+    table.cell(dash, 0, 2, "Trend", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 2, trend_label, text_color=trend_color, bgcolor=color.new(color.navy, 70))
+
+    rs_txt = rs_rising ? "RISING" : "FALLING"
+    rs_clr = rs_rising ? color.green : color.red
+    table.cell(dash, 0, 3, "RS vs SPY", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 3, rs_txt + " (" + str.tostring(math.round(rs_12m, 1)) + "%)", text_color=rs_clr, bgcolor=color.new(color.navy, 70))
+
+    rsi_clr = rsi_val > 70 ? color.red : rsi_val < 30 ? color.green : color.white
+    table.cell(dash, 0, 4, "RSI", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 4, str.tostring(math.round(rsi_val, 1)), text_color=rsi_clr, bgcolor=color.new(color.navy, 70))
+
+    macd_dir = macd_line > signal_line ? "BULL" : "BEAR"
+    macd_clr = macd_line > signal_line ? color.green : color.red
+    table.cell(dash, 0, 5, "MACD", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 5, macd_dir, text_color=macd_clr, bgcolor=color.new(color.navy, 70))
+
+    adx_txt = adx_val > adx_threshold ? "TREND" : "RANGE"
+    adx_clr = adx_val > adx_threshold ? color.green : color.gray
+    table.cell(dash, 0, 6, "ADX", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 6, adx_txt + " (" + str.tostring(math.round(adx_val, 0)) + ")", text_color=adx_clr, bgcolor=color.new(color.navy, 70))
+
+    vol_txt = vol_surge ? "SURGE" : volume > avg_vol ? "ABOVE AVG" : "LOW"
+    vol_clr = vol_surge ? color.green : volume > avg_vol ? color.yellow : color.gray
+    table.cell(dash, 0, 7, "Volume", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 7, vol_txt, text_color=vol_clr, bgcolor=color.new(color.navy, 70))
+
+    // BB Position
+    bb_pos_txt = bb_pct > 100 ? "ABOVE" : bb_pct > 80 ? "HIGH" : bb_pct > 50 ? "MID-H" : bb_pct > 20 ? "MID-L" : bb_pct > 0 ? "LOW" : "BELOW"
+    bb_pos_clr = bb_pct > 80 ? color.red : bb_pct > 50 ? color.white : bb_pct > 20 ? color.yellow : color.green
+    table.cell(dash, 0, 8, "BB", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 8, bb_pos_txt + " (" + str.tostring(math.round(bb_pct, 0)) + "%)", text_color=bb_pos_clr, bgcolor=color.new(color.navy, 70))
+
+    // Stochastic
+    stoch_txt = stoch_raw_k > 80 ? "OB" : stoch_raw_k > 50 ? "BULL" : stoch_raw_k > 20 ? "BEAR" : "OS"
+    stoch_clr = stoch_raw_k > 80 ? color.red : stoch_raw_k > 50 ? color.lime : stoch_raw_k > 20 ? color.orange : color.green
+    table.cell(dash, 0, 9, "Stoch", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 9, stoch_txt + " (" + str.tostring(math.round(stoch_raw_k, 0)) + ")", text_color=stoch_clr, bgcolor=color.new(color.navy, 70))
+
+    // CMF
+    cmf_txt = cmf_val > 0.1 ? "STRONG IN" : cmf_val > 0 ? "INFLOW" : cmf_val > -0.1 ? "OUTFLOW" : "STRONG OUT"
+    cmf_clr = cmf_val > 0.1 ? color.green : cmf_val > 0 ? color.lime : cmf_val > -0.1 ? color.orange : color.red
+    table.cell(dash, 0, 10, "CMF", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 10, cmf_txt + " (" + str.tostring(math.round(cmf_val, 2)) + ")", text_color=cmf_clr, bgcolor=color.new(color.navy, 70))
+
+    // VWAP
+    vwap_txt = timeframe.isdwm ? "N/A" : close > vwap_val ? "ABOVE" : "BELOW"
+    vwap_clr = timeframe.isdwm ? color.gray : close > vwap_val ? color.green : color.red
+    table.cell(dash, 0, 11, "VWAP", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 11, vwap_txt, text_color=vwap_clr, bgcolor=color.new(color.navy, 70))
+
+    pos_txt = in_position ? "IN (" + str.tostring(math.round(entry_price, 2)) + ")" : "NONE"
+    pos_clr = in_position ? color.green : color.gray
+    table.cell(dash, 0, 12, "Position", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 12, pos_txt, text_color=pos_clr, bgcolor=color.new(color.navy, 70))
+
+    sig_txt = strong_buy ? "STRONG BUY" : buy_signal ? "BUY" : sell_signal ? "SELL" : "WAIT"
+    sig_clr = strong_buy ? color.green : buy_signal ? color.lime : sell_signal ? color.red : color.gray
+    table.cell(dash, 0, 13, "Signal", text_color=color.white, bgcolor=color.new(color.navy, 70))
+    table.cell(dash, 1, 13, sig_txt, text_color=sig_clr, bgcolor=color.new(color.navy, 70), text_size=size.normal)
+
+// ====== ALERTS ======
+alertcondition(strong_buy and not strong_buy[1], title="Strong Buy", message="STRONG BUY Signal")
+alertcondition(buy_signal and not buy_signal[1], title="Buy", message="BUY Signal")
+alertcondition(sell_signal and not sell_signal[1], title="Sell", message="SELL Signal")

@@ -1,0 +1,278 @@
+//@version=6
+indicator("All-in-One Strategy Suite v1.0",
+    overlay=true,
+    max_boxes_count=500,
+    max_labels_count=500)
+
+// ====== STRATEGY SELECTOR ======
+strategy_mode = input.string("HYBRID",
+    options=["DIY", "SUPPLY_DEMAND", "HYBRID"],
+    group="🎛️ STRATEGY SELECTOR",
+    title="Strategy Mode")
+
+min_signal_strength = input.int(50, minval=0, maxval=100,
+    group="🎛️ STRATEGY SELECTOR",
+    title="Min Signal Strength Filter %")
+
+// Hybrid 모드 가중치
+diy_weight = input.float(0.6, minval=0, maxval=1, step=0.1,
+    group="🎛️ STRATEGY SELECTOR",
+    title="DIY Weight (HYBRID)")
+sd_weight = input.float(0.4, minval=0, maxval=1, step=0.1,
+    group="🎛️ STRATEGY SELECTOR",
+    title="SD Weight (HYBRID)")
+
+// ====== DIY CUSTOM STRATEGY PARAMETERS ======
+diy_rsi_len = input.int(14, minval=2,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="RSI Period")
+diy_rsi_upper = input.int(70, minval=50, maxval=100,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="RSI Upper Level")
+diy_rsi_lower = input.int(30, minval=0, maxval=50,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="RSI Lower Level")
+
+diy_sma_fast = input.int(50,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="SMA Fast (Trend)")
+diy_sma_mid = input.int(150,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="SMA Mid (Trend)")
+diy_sma_slow = input.int(200,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="SMA Slow (Trend)")
+
+diy_vol_threshold = input.float(1.0, minval=0.5,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="Volume Multiplier")
+
+diy_tp_percent = input.float(2.0, minval=0.5,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="TP Target %")
+diy_sl_percent = input.float(1.5, minval=0.5,
+    group="📊 DIY CUSTOM STRATEGY",
+    title="SL Risk %")
+
+// ====== SUPPLY-DEMAND PARAMETERS ======
+sd_zone_period = input.int(20, minval=5,
+    group="💎 SUPPLY-DEMAND STRATEGY",
+    title="Zone Detection Period")
+sd_zone_min_size = input.float(0.5, minval=0.1,
+    group="💎 SUPPLY-DEMAND STRATEGY",
+    title="Min Zone Size %")
+sd_rsi_threshold = input.int(40, minval=20, maxval=60,
+    group="💎 SUPPLY-DEMAND STRATEGY",
+    title="RSI Threshold")
+sd_confirmation = input.int(3, minval=1, maxval=5,
+    group="💎 SUPPLY-DEMAND STRATEGY",
+    title="Confirmation Bars")
+sd_zone_draw = input.bool(true,
+    group="💎 SUPPLY-DEMAND STRATEGY",
+    title="Draw Zones")
+
+// ====== SHARED INDICATORS ======
+// 이동평균
+sma_fast = ta.sma(close, diy_sma_fast)
+sma_mid = ta.sma(close, diy_sma_mid)
+sma_slow = ta.sma(close, diy_sma_slow)
+
+// RSI
+rsi = ta.rsi(close, diy_rsi_len)
+
+// Volume Analysis
+avg_volume = ta.sma(volume, 20)
+vol_ratio = volume / avg_volume
+
+// ATR (Volatility)
+atr = ta.atr(14)
+
+// ====== SUPPLY-DEMAND ZONE DETECTION ======
+var array<box> supply_zones = array.new<box>()
+var array<box> demand_zones = array.new<box>()
+var float last_supply_high = na
+var float last_demand_low = na
+var int last_supply_bar = na
+var int last_demand_bar = na
+
+// Supply Zone: Recent High + Rejection
+if high[sd_confirmation] > high[sd_confirmation + 1] and
+   close < open and
+   volume > avg_volume * 1.0
+    supply_high = high[sd_confirmation]
+    supply_low = low[sd_confirmation]
+
+    if math.abs(supply_high - supply_low) / supply_low * 100 >= sd_zone_min_size
+        if sd_zone_draw and array.size(supply_zones) < 50
+            box.new(bar_index[sd_confirmation], supply_low,
+                bar_index, supply_high,
+                border_color=color.new(color.red, 40),
+                bgcolor=color.new(color.red, 90))
+        last_supply_high := supply_high
+        last_supply_bar := bar_index[sd_confirmation]
+
+// Demand Zone: Recent Low + Bounce
+if low[sd_confirmation] < low[sd_confirmation + 1] and
+   close > open and
+   volume > avg_volume * 1.0
+    demand_low = low[sd_confirmation]
+    demand_high = high[sd_confirmation]
+
+    if math.abs(demand_high - demand_low) / demand_low * 100 >= sd_zone_min_size
+        if sd_zone_draw and array.size(demand_zones) < 50
+            box.new(bar_index[sd_confirmation], demand_low,
+                bar_index, demand_high,
+                border_color=color.new(color.green, 40),
+                bgcolor=color.new(color.green, 90))
+        last_demand_low := demand_low
+        last_demand_bar := bar_index[sd_confirmation]
+
+// ====== DIY STRATEGY SIGNALS ======
+diy_trend_aligned = close > sma_fast and sma_fast > sma_mid and sma_mid > sma_slow
+diy_trend_strong = diy_trend_aligned and sma_slow > sma_slow[1]
+diy_rsi_valid = rsi > diy_rsi_lower and rsi < diy_rsi_upper
+diy_volume_ok = vol_ratio > diy_vol_threshold
+
+diy_long_signal = diy_trend_strong and diy_rsi_valid and diy_volume_ok and
+                  close > sma_fast and rsi > 45
+diy_short_signal = not diy_trend_strong and rsi < diy_rsi_upper and
+                   close < sma_fast and rsi < 55
+
+// DIY Signal Strength (0-100)
+diy_signal_strength = 0.0
+if diy_trend_aligned
+    diy_signal_strength += 30
+if diy_trend_strong
+    diy_signal_strength += 15
+if diy_rsi_valid
+    diy_signal_strength += 25
+if diy_volume_ok
+    diy_signal_strength += 20
+if close > sma_fast
+    diy_signal_strength += 10
+
+// ====== SUPPLY-DEMAND SIGNALS ======
+sd_long_signal = na(last_demand_low) ? false :
+                 (close > last_demand_low and rsi > sd_rsi_threshold and
+                  vol_ratio > 1.0)
+sd_short_signal = na(last_supply_high) ? false :
+                  (close < last_supply_high and rsi < (100 - sd_rsi_threshold) and
+                   vol_ratio > 1.0)
+
+// SD Signal Strength (0-100)
+sd_signal_strength = 0.0
+if not na(last_demand_low)
+    proximity = (close - last_demand_low) / (close * 0.02)
+    sd_signal_strength += math.min(30, proximity * 15)
+if rsi > sd_rsi_threshold
+    sd_signal_strength += 30
+if vol_ratio > 1.2
+    sd_signal_strength += 25
+if bar_index - last_demand_bar < 5
+    sd_signal_strength += 15
+
+// ====== SIGNAL AGGREGATION ======
+final_long_signal = false
+final_short_signal = false
+final_signal_strength = 0.0
+
+if strategy_mode == "DIY"
+    final_long_signal := diy_long_signal and diy_signal_strength >= min_signal_strength
+    final_short_signal := diy_short_signal and diy_signal_strength >= min_signal_strength
+    final_signal_strength := diy_signal_strength
+
+else if strategy_mode == "SUPPLY_DEMAND"
+    final_long_signal := sd_long_signal and sd_signal_strength >= min_signal_strength
+    final_short_signal := sd_short_signal and sd_signal_strength >= min_signal_strength
+    final_signal_strength := sd_signal_strength
+
+else  // HYBRID
+    combined_long_score = (diy_signal_strength * diy_weight) + (sd_signal_strength * sd_weight)
+    combined_short_score = (diy_signal_strength * diy_weight) + (sd_signal_strength * sd_weight)
+
+    final_long_signal := (diy_long_signal or sd_long_signal) and
+                         combined_long_score >= min_signal_strength
+    final_short_signal := (diy_short_signal or sd_short_signal) and
+                          combined_short_score >= min_signal_strength
+    final_signal_strength := combined_long_score
+
+// ====== ENTRY/EXIT LEVELS ======
+entry_price = close
+tp_target = entry_price + (entry_price * diy_tp_percent / 100)
+sl_target = entry_price - (entry_price * diy_sl_percent / 100)
+
+// ====== VISUAL SIGNALS ======
+plotshape(final_long_signal,
+    style=shape.labelup,
+    location=location.belowbar,
+    color=color.new(color.green, 0),
+    text="BUY",
+    size=size.small)
+
+plotshape(final_short_signal,
+    style=shape.labeldown,
+    location=location.abovebar,
+    color=color.new(color.red, 0),
+    text="SELL",
+    size=size.small)
+
+// MA Lines
+plot(sma_fast, color=color.new(color.orange, 30), linewidth=2, title="SMA50")
+plot(sma_mid, color=color.new(color.blue, 30), linewidth=2, title="SMA150")
+plot(sma_slow, color=color.new(color.purple, 30), linewidth=2, title="SMA200")
+
+// Entry/Exit Lines
+plot(final_long_signal ? tp_target : na,
+    color=color.new(color.green, 50),
+    style=plot.style_linebr,
+    linewidth=2,
+    title="TP Target")
+plot(final_long_signal ? sl_target : na,
+    color=color.new(color.red, 50),
+    style=plot.style_linebr,
+    linewidth=2,
+    title="SL Target")
+
+// ====== SIGNAL STRENGTH GAUGE ======
+barcolor(final_signal_strength >= min_signal_strength ?
+    (final_long_signal ? color.new(color.green, 70) :
+     final_short_signal ? color.new(color.red, 70) : na) :
+    na)
+
+// ====== BACKTESTING TABLE ======
+var table backtest_table = na
+
+if barstate.islast
+    if na(backtest_table)
+        backtest_table := table.new(position.top_right, 5, 10,
+            border_color=color.gray, frame_color=color.gray,
+            frame_width=1)
+
+    table.cell(backtest_table, 0, 0, "SIGNAL METRICS",
+        text_color=color.white, bgcolor=color.new(color.blue, 60))
+    table.cell(backtest_table, 1, 0, str.tostring(math.round(final_signal_strength, 1)) + "%",
+        text_color=color.white, bgcolor=color.new(color.blue, 60))
+
+    table.cell(backtest_table, 0, 1, "Mode: " + strategy_mode,
+        text_color=color.white, bgcolor=color.new(color.navy, 80))
+
+    table.cell(backtest_table, 0, 2, "Last Entry:",
+        text_color=color.white, bgcolor=color.new(color.navy, 80))
+    table.cell(backtest_table, 1, 2, str.tostring(math.round(entry_price, 2)),
+        text_color=color.white, bgcolor=color.new(color.navy, 80))
+
+    table.cell(backtest_table, 0, 3, "TP Target:",
+        text_color=color.new(color.green, 0), bgcolor=color.new(color.navy, 80))
+    table.cell(backtest_table, 1, 3, str.tostring(math.round(tp_target, 2)),
+        text_color=color.new(color.green, 0), bgcolor=color.new(color.navy, 80))
+
+    table.cell(backtest_table, 0, 4, "SL Target:",
+        text_color=color.new(color.red, 0), bgcolor=color.new(color.navy, 80))
+    table.cell(backtest_table, 1, 4, str.tostring(math.round(sl_target, 2)),
+        text_color=color.new(color.red, 0), bgcolor=color.new(color.navy, 80))
+
+// Alerts
+alertcondition(final_long_signal, title="Buy Signal",
+    message="BUY SIGNAL")
+alertcondition(final_short_signal, title="Sell Signal",
+    message="SELL SIGNAL")

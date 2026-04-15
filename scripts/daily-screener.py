@@ -1,0 +1,564 @@
+#!/usr/bin/env python3
+"""Daily Screener - runs after market close, saves results for backtesting
+Output: Obsidian Vault/주식/스크리너백테스트/
+"""
+
+import requests
+import json
+import csv
+import os
+from datetime import datetime
+
+BASE = os.environ.get("DASHBOARD_URL", "https://supply-demand-dashboard.onrender.com")
+today = datetime.now().strftime("%Y-%m-%d")
+DATA_DIR = os.path.expanduser(f"~/Documents/Obsidian Vault/주식/스크리너백테스트/{today}")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+def run_screener(universe):
+    results = []
+    event_type = ""
+    try:
+        r = requests.get(f"{BASE}/api/screener/run?universe={universe}&minPrice=5&maxPrice=99999&limit=500", stream=True, timeout=600)
+        for line in r.iter_lines(decode_unicode=True):
+            if not line: continue
+            if line.startswith('event:'): event_type = line.split(':', 1)[1].strip()
+            elif line.startswith('data:'):
+                data = json.loads(line.split(':', 1)[1].strip())
+                if event_type == 'result': results.append(data)
+                elif event_type == 'done': break
+    except Exception as e:
+        print(f"Error {universe}: {e}")
+    return results
+
+def score_result(r):
+    score = r.get('passCount', 0) * 10
+    rpr = r.get('rpr', 0) or 0
+    rs = r.get('rsVsSpy', 0) or 0
+    score += min(rpr, 100) * 0.3 + min(rs, 100) * 0.2
+    if r.get('vcp'): score += 15
+    if r.get('rsMakingHigh'): score += 15
+    if r.get('pocketPivot'): score += 10
+    if r.get('nearBreakout'): score += 20
+    if r.get('fundGrade'): score += 10
+    return score
+
+def save_csv(results, universe):
+    filename = f"{DATA_DIR}/{today}_{universe}.csv"
+    scored = [(r, score_result(r)) for r in results]
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    fields = ['date','universe','rank','ticker','price','tpr','rpr','rsVsSpy','rs12m','vcpScore',
+              'passCount','epsThisY','salesQQ','pe','fpe','roe','instTrans','score',
+              'bnb','stage2','vcp','rsMakingHigh','pocketPivot','nearBreakout','fundGrade']
+
+    with open(filename, 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        for i, (r, sc) in enumerate(scored):
+            w.writerow({
+                'date': today, 'universe': universe, 'rank': i+1,
+                'ticker': r.get('ticker',''), 'price': r.get('price',0),
+                'tpr': r.get('tpr',''), 'rpr': r.get('rpr',0),
+                'rsVsSpy': r.get('rsVsSpy',0), 'rs12m': r.get('rs12m',0),
+                'vcpScore': r.get('vcpScore',0), 'passCount': r.get('passCount',0),
+                'epsThisY': r.get('epsThisY',''), 'salesQQ': r.get('salesQQ',''),
+                'pe': r.get('pe',''), 'fpe': r.get('fpe',''),
+                'roe': r.get('roe',''), 'instTrans': r.get('instTrans',''),
+                'score': round(sc, 1),
+                'bnb': 1 if r.get('bnb') else 0, 'stage2': 1 if r.get('stage2') else 0,
+                'vcp': 1 if r.get('vcp') else 0, 'rsMakingHigh': 1 if r.get('rsMakingHigh') else 0,
+                'pocketPivot': 1 if r.get('pocketPivot') else 0,
+                'nearBreakout': 1 if r.get('nearBreakout') else 0,
+                'fundGrade': 1 if r.get('fundGrade') else 0,
+            })
+    return filename, len(scored)
+
+def get_ticker_name(ticker):
+    """종목명 매핑 (suffix .KS/.KQ 처리)"""
+    # 미국 종목
+    us_names = {
+        'MPWR': 'Monolithic Power', 'INTC': 'Intel', 'AVGO': 'Broadcom', 'AMD': 'AMD',
+        'STX': 'Seagate', 'CVS': 'CVS Health', 'MRNA': 'Moderna', 'ON': 'ON Semi',
+        'MRK': 'Merck', 'PLTR': 'Palantir', 'AMAT': 'Applied Materials', 'ASML': 'ASML',
+        'GOOGL': 'Alphabet', 'GOOG': 'Google', 'KLAC': 'KLA', 'LRCX': 'Lam Research',
+        'MU': 'Micron', 'WBD': 'Western Digital', 'WDC': 'Western Digital', 'MRVL': 'Marvell',
+        'MCHP': 'Microchip', 'ROST': 'Ross Stores', 'ADI': 'Analog Devices',
+        'JBHT': 'J.B. Hunt', 'TXN': 'Texas Instruments', 'CAT': 'Caterpillar',
+        'NUE': 'Nucor', 'ANET': 'Arista', 'TER': 'Teradyne', 'CFG': 'Citizens Financial'
+    }
+
+    # 한국 종목 (6자리 코드) - 2026 최신 기업명
+    kr_names = {
+        '000080': '하이트진로',
+        '000100': '유한양행',
+        '000120': 'CJ대한통운',
+        '000150': '두산',
+        '000210': 'DL',
+        '000240': '한국앤컴퍼니',
+        '000250': '삼천당제약',
+        '000270': '기아',
+        '000660': 'SK하이닉스',
+        '000670': '영풍',
+        '000720': '현대건설',
+        '000810': '삼성화재',
+        '000880': '한화',
+        '0009K0': '에임드바이오',
+        '001040': 'CJ',
+        '001430': '세아베스틸지주',
+        '001440': '대한전선',
+        '001450': '현대해상',
+        '001680': '대상',
+        '001800': '오리온홀딩스',
+        '002030': '아세아',
+        '002380': 'KCC',
+        '002790': '아모레퍼시픽홀딩스',
+        '002840': '미원상사',
+        '003030': '세아제강지주',
+        '003090': '대웅',
+        '003230': '삼양식품',
+        '003240': '태광산업',
+        '003380': '하림지주',
+        '003490': '대한항공',
+        '003550': 'LG',
+        '003670': '포스코퓨처엠',
+        '004000': '롯데정밀화학',
+        '004020': '현대제철',
+        '004170': '신세계',
+        '004370': '농심',
+        '004490': '세방전지',
+        '004990': '롯데지주',
+        '005250': '녹십자홀딩스',
+        '005290': '동진쎄미켐',
+        '005300': '롯데칠성',
+        '005380': '현대차',
+        '005420': '코스모화학',
+        '005490': 'POSCO홀딩스',
+        '005830': 'DB손해보험',
+        '005850': '에스엘',
+        '005930': '삼성전자',
+        '005940': 'NH투자증권',
+        '006040': '동원산업',
+        '006260': 'LS',
+        '006280': '녹십자',
+        '006360': 'GS건설',
+        '006400': '삼성SDI',
+        '006650': '대한유화',
+        '006730': '서부T&D',
+        '006800': '미래에셋증권',
+        '007070': 'GS리테일',
+        '007310': '오뚜기',
+        '007340': 'DN오토모티브',
+        '007390': '네이처셀',
+        '007660': '이수페타시스',
+        '008730': '율촌화학',
+        '008770': '호텔신라',
+        '008930': '한미사이언스',
+        '009150': '삼성전기',
+        '009240': '한샘',
+        '009420': '한올바이오파마',
+        '009520': '포스코엠텍',
+        '009540': 'HD한국조선해양',
+        '009830': '한화솔루션',
+        '009970': '영원무역홀딩스',
+        '010060': 'OCI홀딩스',
+        '010120': 'LS ELECTRIC',
+        '010130': '고려아연',
+        '010140': '삼성중공업',
+        '010950': 'S-Oil',
+        '011070': 'LG이노텍',
+        '011170': '롯데케미칼',
+        '011200': 'HMM',
+        '011210': '현대위아',
+        '011780': '금호석유화학',
+        '011790': 'SKC',
+        '012330': '현대모비스',
+        '012450': '한화에어로스페이스',
+        '0126Z0': '삼성에피스홀딩스',
+        '012750': '에스원',
+        '014620': '성광벤드',
+        '014680': '한솔케미칼',
+        '014820': '동원시스템즈',
+        '015750': '성우하이텍',
+        '015760': '한국전력',
+        '016360': '삼성증권',
+        '017670': 'SK텔레콤',
+        '017800': '현대엘리베이터',
+        '017960': '한국카본',
+        '018260': '삼성에스디에스',
+        '018290': '브이티',
+        '018880': '한온시스템',
+        '021240': '코웨이',
+        '022100': '포스코DX',
+        '023530': '롯데쇼핑',
+        '024110': '기업은행',
+        '025320': '시노펙스',
+        '025900': '동화기업',
+        '025980': '아난티',
+        '026960': '동서',
+        '028050': '삼성E&A',
+        '028260': '삼성물산',
+        '028300': 'HLB',
+        '028670': '팬오션',
+        '029780': '삼성카드',
+        '030000': '제일기획',
+        '030200': 'KT',
+        '030520': '한글과컴퓨터',
+        '031980': '피에스케이홀딩스',
+        '032190': '다우데이타',
+        '032500': '케이엠더블유',
+        '032640': 'LG유플러스',
+        '032820': '우리기술',
+        '032830': '삼성생명',
+        '033100': '제룡전기',
+        '033500': '동성화인텍',
+        '033780': 'KT&G',
+        '034020': '두산에너빌리티',
+        '034220': 'LG디스플레이',
+        '034230': '파라다이스',
+        '034730': 'SK',
+        '035250': '강원랜드',
+        '035420': 'NAVER',
+        '035720': '카카오',
+        '035760': 'CJ ENM',
+        '035900': 'JYP Ent.',
+        '036460': '한국가스공사',
+        '036540': 'SFA반도체',
+        '036570': '엔씨소프트',
+        '036620': '감성코퍼레이션',
+        '036810': '에프에스티',
+        '036830': '솔브레인홀딩스',
+        '036930': '주성엔지니어링',
+        '039030': '이오테크닉스',
+        '039200': '오스코텍',
+        '039490': '키움증권',
+        '041190': '우리기술투자',
+        '041510': '에스엠',
+        '042000': '카페24',
+        '042660': '한화오션',
+        '042700': '한미반도체',
+        '046890': '서울반도체',
+        '047040': '대우건설',
+        '047050': '포스코인터내셔널',
+        '047810': '한국항공우주',
+        '048410': '현대바이오',
+        '050890': '쏠리드',
+        '051600': '한전KPS',
+        '051900': 'LG생활건강',
+        '051910': 'LG화학',
+        '052400': '코나아이',
+        '052690': '한전기술',
+        '053030': '바이넥스',
+        '053800': '안랩',
+        '055550': '신한지주',
+        '056080': '유진로봇',
+        '056190': '에스에프에이',
+        '058470': '리노공업',
+        '058610': '에스피지',
+        '058970': '엠로',
+        '059090': '미코',
+        '060250': 'NHN KCP',
+        '060280': '큐렉소',
+        '060370': 'LS마린솔루션',
+        '062040': '산일전기',
+        '064350': '현대로템',
+        '064400': 'LG씨엔에스',
+        '064760': '티씨케이',
+        '065350': '신성델타테크',
+        '066570': 'LG전자',
+        '066970': '엘앤에프',
+        '067160': 'SOOP',
+        '067310': '하나마이크론',
+        '068270': '셀트리온',
+        '068760': '셀트리온제약',
+        '069080': '웹젠',
+        '069260': 'TKG휴켐스',
+        '069620': '대웅제약',
+        '069960': '현대백화점',
+        '071050': '한국금융지주',
+        '071320': '지역난방공사',
+        '071970': 'HD현대마린엔진',
+        '073240': '금호타이어',
+        '074600': '원익QnC',
+        '078340': '컴투스',
+        '078600': '대주전자재료',
+        '078930': 'GS',
+        '079370': '제우스',
+        '079550': 'LIG넥스원',
+        '080220': '제주반도체',
+        '081660': '미스토홀딩스',
+        '082270': '젬백스',
+        '082740': '한화엔진',
+        '083650': '비에이치아이',
+        '084370': '유진테크',
+        '085660': '차바이오텍',
+        '086280': '현대글로비스',
+        '086450': '동국제약',
+        '086520': '에코프로',
+        '086790': '하나금융지주',
+        '086900': '메디톡스',
+        '087010': '펩트론',
+        '088350': '한화생명',
+        '089030': '테크윙',
+        '090430': '아모레퍼시픽',
+        '093370': '후성',
+        '095340': 'ISC',
+        '095610': '테스',
+        '095660': '네오위즈',
+        '096530': '씨젠',
+        '096770': 'SK이노베이션',
+        '097950': 'CJ제일제당',
+        '098460': '고영',
+        '101360': '에코앤드림',
+        '101490': '에스앤에스텍',
+        '101730': '위메이드맥스',
+        '103140': '풍산',
+        '105560': 'KB금융',
+        '108490': '로보티즈',
+        '108860': '셀바스AI',
+        '111770': '영원무역',
+        '112040': '위메이드',
+        '112610': '씨에스윈드',
+        '114090': 'GKL',
+        '120110': '코오롱인더',
+        '121600': '나노신소재',
+        '122870': '와이지엔터테인먼트',
+        '128940': '한미약품',
+        '131290': '티에스이',
+        '131970': '두산테스나',
+        '137310': '에스디바이오센서',
+        '137400': '피엔티',
+        '138040': '메리츠금융지주',
+        '138930': 'BNK금융지주',
+        '139130': 'iM금융지주',
+        '139480': '이마트',
+        '140860': '파크시스템스',
+        '141080': '리가켐바이오',
+        '145020': '휴젤',
+        '161390': '한국타이어앤테크놀로지',
+        '161580': '필옵틱스',
+        '161890': '한국콜마',
+        '166090': '하나머티리얼즈',
+        '171090': '선익시스템',
+        '175330': 'JB금융지주',
+        '178320': '서진시스템',
+        '180640': '한진칼',
+        '183300': '코미코',
+        '185750': '종근당',
+        '189300': '인텔리안테크',
+        '192080': '더블유게임즈',
+        '192820': '코스맥스',
+        '194480': '데브시스터즈',
+        '195940': 'HK이노엔',
+        '196170': '알테오젠',
+        '200130': '콜마비앤에이치',
+        '204270': '제이앤티씨',
+        '204320': 'HL만도',
+        '207940': '삼성바이오로직스',
+        '211050': '인카금융서비스',
+        '213420': '덕산네오룩스',
+        '214150': '클래시스',
+        '214370': '케어젠',
+        '214430': '아이쓰리시스템',
+        '214450': '파마리서치',
+        '215000': '골프존',
+        '215200': '메가스터디교육',
+        '218410': 'RFHIC',
+        '222080': '씨아이에스',
+        '222800': '심텍',
+        '225570': '넥슨게임즈',
+        '226950': '올릭스',
+        '232140': '와이씨',
+        '237690': '에스티팜',
+        '240810': '원익IPS',
+        '241560': '두산밥캣',
+        '241710': '코스메카코리아',
+        '247540': '에코프로비엠',
+        '251270': '넷마블',
+        '251970': '펌텍코리아',
+        '253450': '스튜디오드래곤',
+        '253590': '네오셈',
+        '257720': '실리콘투',
+        '259960': '크래프톤',
+        '263750': '펄어비스',
+        '267250': 'HD현대',
+        '267260': 'HD현대일렉트릭',
+        '268280': '미원에스씨',
+        '271560': '오리온',
+        '272210': '한화시스템',
+        '272290': '이녹스첨단소재',
+        '277810': '레인보우로보틱스',
+        '278280': '천보',
+        '278470': '에이피알',
+        '280360': '롯데웰푸드',
+        '281740': '레이크머티리얼즈',
+        '282330': 'BGF리테일',
+        '285130': 'SK케미칼',
+        '290650': '엘앤씨바이오',
+        '293490': '카카오게임즈',
+        '298020': '효성티앤씨',
+        '298040': '효성중공업',
+        '298050': 'HS효성첨단소재',
+        '298380': '에이비엘바이오',
+        '300720': '한일시멘트',
+        '302440': 'SK바이오사이언스',
+        '304100': '솔트룩스',
+        '307950': '현대오토에버',
+        '310210': '보로노이',
+        '316140': '우리금융지주',
+        '319660': '피에스케이',
+        '323280': '태성',
+        '323410': '카카오뱅크',
+        '326030': 'SK바이오팜',
+        '328130': '루닛',
+        '329180': 'HD현대중공업',
+        '336570': '원텍',
+        '347850': '디앤디파마텍',
+        '348210': '넥스틴',
+        '348370': '엔켐',
+        '352480': '씨앤씨인터내셔널',
+        '352820': '하이브',
+        '357780': '솔브레인',
+        '358570': '지아이이노베이션',
+        '361610': 'SK아이이테크놀로지',
+        '365340': '성일하이텍',
+        '373220': 'LG에너지솔루션',
+        '375500': 'DL이앤씨',
+        '376300': '디어유',
+        '377300': '카카오페이',
+        '383220': 'F&F',
+        '383310': '에코프로에이치엔',
+        '388720': '유일로보틱스',
+        '399720': '가온칩스',
+        '402340': 'SK스퀘어',
+        '403870': 'HPSP',
+        '417200': 'LS머트리얼즈',
+        '443060': 'HD현대마린솔루션',
+        '445680': '큐리옥스바이오시스템즈',
+        '450080': '에코프로머티',
+        '454910': '두산로보틱스',
+        '457190': '이수스페셜티케미컬',
+        '460930': '현대힘스',
+        '466100': '클로봇',
+    }
+
+    # 미국 종목 확인
+    if ticker in us_names:
+        return us_names[ticker]
+
+    # 한국 종목: suffix 제거 후 확인
+    base_ticker = ticker.split('.')[0] if '.' in ticker else ticker
+    if base_ticker in kr_names:
+        return kr_names[base_ticker]
+
+    return ticker
+
+def save_markdown(all_results):
+    """Save Obsidian-friendly markdown summary with US/KR separated"""
+    md_file = f"{DATA_DIR}/{today}_리포트.md"
+
+    # Separate US and Korea results
+    us_scored = []
+    kr_scored = []
+
+    for universe, results in all_results.items():
+        scored = [(r, score_result(r)) for r in results]
+        if universe in ["nasdaq100", "sp500"]:
+            us_scored.extend(scored)
+        else:  # kospi200, kosdaq150
+            kr_scored.extend(scored)
+
+    us_scored.sort(key=lambda x: x[1], reverse=True)
+    kr_scored.sort(key=lambda x: x[1], reverse=True)
+
+    # Deduplicate and get top 10 for each region (removing .KS/.KQ suffix)
+    def deduplicate_top10(scored_list):
+        seen = set()
+        top10 = []
+        for r, sc in scored_list:
+            ticker = r['ticker']
+            # Remove .KS, .KQ, etc. suffix for deduplication
+            base_ticker = ticker.split('.')[0] if '.' in ticker else ticker
+            if base_ticker not in seen:
+                seen.add(base_ticker)
+                top10.append((r, sc))
+            if len(top10) >= 10:
+                break
+        return top10
+
+    us_top10 = deduplicate_top10(us_scored)
+    kr_top10 = deduplicate_top10(kr_scored)
+
+    lines = [
+        f"# 스크리너 일일 리포트 {today}",
+        f"",
+        f"## 요약",
+    ]
+
+    for universe, results in all_results.items():
+        lines.append(f"- **{universe}**: {len(results)}개 통과")
+
+    # US Top 10
+    lines.extend([
+        f"",
+        f"## 미국 Top 10 (NASDAQ100 + S&P500)",
+        f"",
+        f"| # | Ticker | 종목명 | Price | TPR | RPR | RS | Score |",
+        f"|---|--------|--------|-------|-----|-----|-----|-------|",
+    ])
+
+    for i, (r, sc) in enumerate(us_top10):
+        ticker = r.get('ticker','')
+        name = get_ticker_name(ticker)
+        lines.append(f"| {i+1} | **{ticker}** | {name} | ${r.get('price',0):.2f} | {r.get('tpr','-')} | {r.get('rpr',0):.0f} | {r.get('rsVsSpy',0)} | {sc:.0f} |")
+
+    # KR Top 10
+    lines.extend([
+        f"",
+        f"## 한국 Top 10 (KOSPI200 + KOSDAQ150)",
+        f"",
+        f"| # | Ticker | 종목명 | Price | TPR | RPR | RS | Score |",
+        f"|---|--------|--------|-------|-----|-----|-----|-------|",
+    ])
+
+    for i, (r, sc) in enumerate(kr_top10):
+        ticker = r.get('ticker','')
+        name = get_ticker_name(ticker)
+        lines.append(f"| {i+1} | **{ticker}** | {name} | ₩{r.get('price',0):.0f} | {r.get('tpr','-')} | {r.get('rpr',0):.0f} | {r.get('rsVsSpy',0)} | {sc:.0f} |")
+
+    lines.extend([
+        f"",
+        f"## 스크리닝 조건",
+        f"- 가격: $5 이상 (미국), ₩1000 이상 (한국)",
+        f"- 유니버스: {', '.join(all_results.keys())}",
+        f"- 정렬: 복합 점수 (패스수*10 + RPR*0.3 + RS*0.2 + 시그널 보너스)",
+        f"",
+        f"## 백테스트 추적",
+        f"- 7일 후 수익률: (추후 자동 기록)",
+        f"- 14일 후 수익률: (추후 자동 기록)",
+        f"- 30일 후 수익률: (추후 자동 기록)",
+        f"",
+        f"---",
+        f"생성: Supply-Demand Dashboard 자동 스크리너",
+    ])
+
+    with open(md_file, 'w') as f:
+        f.write('\n'.join(lines))
+
+    return md_file
+
+if __name__ == "__main__":
+    print(f"=== Daily Screener {today} ===")
+
+    all_results = {}
+    for universe in ["nasdaq100", "sp500", "kospi200", "kosdaq150"]:
+        print(f"\nRunning {universe}...")
+        results = run_screener(universe)
+        print(f"  {len(results)} results")
+        filename, count = save_csv(results, universe)
+        print(f"  Saved: {filename}")
+        all_results[universe] = results
+
+    md_file = save_markdown(all_results)
+    print(f"\nMarkdown: {md_file}")
+    print(f"Top 20: {', '.join([r[0]['ticker'] for r in sorted([(r, score_result(r)) for results in all_results.values() for r in results], key=lambda x: x[1], reverse=True)[:20]])}")
+    print("Done.")

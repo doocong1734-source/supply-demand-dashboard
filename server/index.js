@@ -1103,7 +1103,7 @@ app.get("/api/cot/:ticker", async (req, res) => {
 // WebSocket 연결 상태 확인 포함한 헬스체크
 app.get("/api/health", (_, res) => res.json({
     ok: true,
-    version: "v20260325",
+    version: "v20260415",
     time: new Date().toISOString(),
     finnhub: {
         token: !!FINNHUB_TOKEN,

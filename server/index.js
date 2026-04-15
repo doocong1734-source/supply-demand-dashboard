@@ -1560,95 +1560,102 @@ app.get("/api/naver-themes/refresh", async (req, res) => {
     res.json({ status: "cache cleared", message: "다음 /api/naver-themes 요청 시 재수집됩니다" });
 });
 
-// GET /api/us-theme-quotes  (미국 테마 전광판용 야후파이낸스 시세 - 82그룹 전체)
+// GET /api/us-theme-quotes  (미국 테마 전광판용 - Yahoo Finance v8 chart API, 인증 불필요)
 const usThemeQuoteCache = new NodeCache({ stdTTL: 300 });
 
-// crumb 인증을 사용하는 배치 조회 (일반 fetchYFQuotesBatch와 달리 cookie+crumb 포함)
-async function fetchYFQuotesBatchAuth(tickers) {
-    const auth = await getYFAuth();
-    const fields = ["regularMarketPrice","regularMarketChangePercent","regularMarketOpen","regularMarketVolume","averageDailyVolume3Month"].join(",");
-    const headers = { ...YF_HEADERS };
-    if (auth.cookie) headers["Cookie"] = auth.cookie;
-    const params = { symbols: tickers.join(","), fields };
-    if (auth.crumb) params.crumb = auth.crumb;
-    const r = await axios.get("https://query1.finance.yahoo.com/v7/finance/quote", {
-        headers, params, timeout: 15000,
+// Yahoo Finance v8 chart API (개별 티커, query2 사용시 인증 불필요)
+async function fetchYFChartQuote(symbol) {
+    const r = await axios.get(`https://query2.finance.yahoo.com/v8/finance/chart/${symbol}`, {
+        params: { interval: "1d", range: "2d", includePrePost: false },
+        headers: YF_HEADERS,
+        timeout: 10000,
     });
-    const out = {};
-    for (const q of (r.data?.quoteResponse?.result || [])) {
-        const price = q.regularMarketPrice || 0;
-        const open  = q.regularMarketOpen  || price;
-        const vol   = q.regularMarketVolume || 0;
-        const avgV  = q.averageDailyVolume3Month || 1;
-        out[q.symbol] = {
-            price: Math.round(price * 100) / 100,
-            daily: Math.round((q.regularMarketChangePercent || 0) * 100) / 100,
-            intra: open > 0 ? Math.round(((price - open) / open) * 10000) / 100 : 0,
-            volume: vol,
-            darkpool: Math.round(Math.min(100, Math.max(0, (vol / Math.max(avgV, 1)) * 20)) * 10) / 10,
-            shortInt: null, open, prevClose: 0,
-        };
-    }
-    return out;
+    const result = r.data?.chart?.result?.[0];
+    if (!result) return null;
+    const meta = result.meta;
+    const opens = result.indicators?.quote?.[0]?.open || [];
+    const price = meta.regularMarketPrice || 0;
+    const prevClose = meta.chartPreviousClose || 0;
+    const todayOpen = opens[opens.length - 1] || price;
+    const vol = meta.regularMarketVolume || 0;
+    return {
+        price: Math.round(price * 100) / 100,
+        daily: prevClose > 0 ? Math.round(((price - prevClose) / prevClose) * 10000) / 100 : 0,
+        intra: todayOpen > 0 ? Math.round(((price - todayOpen) / todayOpen) * 10000) / 100 : 0,
+        volume: vol,
+        darkpool: 0,
+        shortInt: null,
+        open: todayOpen,
+        prevClose,
+    };
 }
+
+const US_THEME_TICKERS = [...new Set([
+    // 반도체
+    "NVDA","AMD","INTC","AVGO","MRVL","SMCI",
+    "QCOM","ARM","ON","NXPI","STM","ADI","TXN",
+    "WOLF","MCHP","SWKS","QRVO","MU","WDC","STX",
+    "NTAP","AMAT","LRCX","KLAC","CAMT","ENTG","TSM","GFS",
+    // AI/데이터
+    "MSFT","GOOGL","META","AMZN","NOW","CRM","SNOW","DDOG",
+    "PLTR","MDB","SOUN","TTD","SNAP","PINS","ISRG","PATH",
+    "EQIX","DLR","VRT","CRWD","PANW","ZS","S","FTNT","IBM",
+    // 클라우드/SaaS
+    "HUBS","TEAM","ZM","BOX","DOCU","INTU","ADBE","BILL",
+    "GTLB","TWLO","OKTA","SHOP","NET","AKAM","FSLY","DELL","CYBR",
+    // 차세대기술
+    "IONQ","RGTI","QUBT","QBTS","COIN","MARA","RIOT","SQ","PYPL",
+    "V","MA","AXP","AFRM","UPST","AAPL","TSLA","MBLY",
+    "RIVN","LCID","GM","F","AVAV","KTOS","ROK","TER",
+    // 통신/네트워크
+    "JNPR","ANET","CSCO","LITE","AAOI","CIEN","FN","COMM",
+    "IRDM","GSAT","RKLB","VZ","T","TMUS","CMCSA",
+    // 우주/방산
+    "BA","LMT","LHX","NOC","RTX","GD","AXON","BWXT",
+    // 헬스케어
+    "JNJ","PFE","MRK","ABBV","BMY","AMGN","GILD","REGN","BIIB","VRTX",
+    "CRSP","NTLA","BEAM","EDIT","MDT","SYK","BSX","EW",
+    "DHR","TMO","ILMN","LH","DGX","TDOC","VEEV","UNH","CVS","HUM","CI","ELV",
+    // 소비/플랫폼
+    "EBAY","ETSY","WMT","NFLX","DIS","WBD","PARA","ROKU",
+    "EA","TTWO","PG","KO","PEP","CL","LVMUY","RACE","EL","TPR","RL",
+    // 산업/에너지
+    "ENPH","FSLR","RUN","SEDG","CSIQ","GE","NEE","BEP",
+    "ALB","SQM","QS","APTV","TE","CEG","CCJ","VST","NRG",
+    "STEM","FLNC","PLUG","FCEL","BE","XOM","CVX","COP","OXY",
+    "CAT","DE","VMC","MLM","JPM","BAC","GS","MS",
+    "ACN","DXC","SAIC",
+])];
+
+// 백그라운드 갱신: 10개씩 병렬, 배치 간 500ms 대기 (총 ~10초)
+async function refreshUSThemeQuotes() {
+    const merged = {};
+    const PARALLEL = 10;
+    for (let i = 0; i < US_THEME_TICKERS.length; i += PARALLEL) {
+        const chunk = US_THEME_TICKERS.slice(i, i + PARALLEL);
+        const results = await Promise.allSettled(chunk.map(t => fetchYFChartQuote(t)));
+        results.forEach((r, j) => {
+            if (r.status === "fulfilled" && r.value) merged[chunk[j]] = r.value;
+        });
+        if (i + PARALLEL < US_THEME_TICKERS.length) await new Promise(r => setTimeout(r, 500));
+    }
+    if (Object.keys(merged).length > 0) {
+        usThemeQuoteCache.set("quotes", merged);
+        console.log(`✅ US theme quotes 갱신: ${Object.keys(merged).length}개`);
+    }
+}
+
+// 서버 시작 시 즉시 + 5분마다 갱신
+refreshUSThemeQuotes();
+setInterval(refreshUSThemeQuotes, 5 * 60 * 1000);
 
 app.get("/api/us-theme-quotes", async (req, res) => {
     try {
         const cached = usThemeQuoteCache.get("quotes");
-        if (cached) return res.json(cached);
-
-        const tickers = [...new Set([
-            // 반도체
-            "NVDA","AMD","INTC","AVGO","MRVL","SMCI",
-            "QCOM","ARM","ON","NXPI","STM","ADI","TXN",
-            "WOLF","MCHP","SWKS","QRVO","MU","WDC","STX",
-            "NTAP","AMAT","LRCX","KLAC","CAMT","ENTG","TSM","GFS",
-            // AI/데이터
-            "MSFT","GOOGL","META","AMZN","NOW","CRM","SNOW","DDOG",
-            "PLTR","MDB","SOUN","TTD","SNAP","PINS","ISRG","PATH",
-            "EQIX","DLR","VRT","CRWD","PANW","ZS","S","FTNT","IBM",
-            // 클라우드/SaaS
-            "HUBS","TEAM","ZM","BOX","DOCU","INTU","ADBE","BILL",
-            "GTLB","TWLO","OKTA","SHOP","NET","AKAM","FSLY","DELL","CYBR",
-            // 차세대기술
-            "IONQ","RGTI","QUBT","QBTS","COIN","MARA","RIOT","SQ","PYPL",
-            "V","MA","AXP","AFRM","UPST","AAPL","TSLA","MBLY",
-            "RIVN","LCID","GM","F","AVAV","KTOS","ROK","TER",
-            // 통신/네트워크
-            "JNPR","ANET","CSCO","LITE","AAOI","CIEN","FN","COMM",
-            "IRDM","GSAT","RKLB","VZ","T","TMUS","CMCSA",
-            // 우주/방산
-            "BA","LMT","LHX","NOC","RTX","GD","AXON","BWXT",
-            // 헬스케어
-            "JNJ","PFE","MRK","ABBV","BMY","AMGN","GILD","REGN","BIIB","VRTX",
-            "CRSP","NTLA","BEAM","EDIT","MDT","SYK","BSX","EW",
-            "DHR","TMO","ILMN","LH","DGX","TDOC","VEEV","UNH","CVS","HUM","CI","ELV",
-            // 소비/플랫폼
-            "EBAY","ETSY","WMT","NFLX","DIS","WBD","PARA","ROKU",
-            "EA","TTWO","PG","KO","PEP","CL","LVMUY","RACE","EL","TPR","RL",
-            // 산업/에너지
-            "ENPH","FSLR","RUN","SEDG","CSIQ","GE","NEE","BEP",
-            "ALB","SQM","QS","APTV","TE","CEG","CCJ","VST","NRG",
-            "STEM","FLNC","PLUG","FCEL","BE","XOM","CVX","COP","OXY",
-            "CAT","DE","VMC","MLM","JPM","BAC","GS","MS",
-            "ACN","DXC","SAIC",
-        ])];
-
-        // 25개씩 순차 처리 (rate-limit 방지, crumb 인증 포함)
-        const CHUNK = 25;
-        const merged = {};
-        for (let i = 0; i < tickers.length; i += CHUNK) {
-            const chunk = tickers.slice(i, i + CHUNK);
-            try {
-                const result = await fetchYFQuotesBatchAuth(chunk);
-                Object.assign(merged, result);
-            } catch (e) {
-                console.warn(`us-theme chunk[${i}] 실패:`, e.message);
-            }
-            if (i + CHUNK < tickers.length) await new Promise(r => setTimeout(r, 300));
-        }
-        usThemeQuoteCache.set("quotes", merged);
-        res.json(merged);
+        if (cached && Object.keys(cached).length > 0) return res.json(cached);
+        // 캐시 미스 시 즉시 갱신 후 반환
+        await refreshUSThemeQuotes();
+        res.json(usThemeQuoteCache.get("quotes") || {});
     } catch (e) {
         console.error("/api/us-theme-quotes:", e.message);
         res.status(500).json({ error: e.message });

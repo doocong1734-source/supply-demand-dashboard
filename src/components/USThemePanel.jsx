@@ -286,6 +286,25 @@ function CategorySection({ cat, groups, quotes, expanded, onToggle }) {
 
 const BASE_URL = window.location.hostname === "localhost" ? "http://localhost:3001" : "";
 
+// 미국 NYSE/NASDAQ 장 상태 계산 (EDT = UTC-4, 9:30~16:00 월~금)
+function getUSMarketStatus() {
+  const now = new Date();
+  const utcH = now.getUTCHours();
+  const utcM = now.getUTCMinutes();
+  const utcDay = now.getUTCDay(); // 0=일, 6=토
+  const totalMin = utcH * 60 + utcM;
+  // EDT = UTC-4 → 장 시간: 13:30~20:00 UTC
+  const isWeekday = utcDay >= 1 && utcDay <= 5;
+  const isOpen = isWeekday && totalMin >= 13 * 60 + 30 && totalMin < 20 * 60;
+  const isPreMarket = isWeekday && totalMin >= 9 * 60 && totalMin < 13 * 60 + 30;
+  // 기준 거래일 (미국 날짜 기준)
+  const edtDate = new Date(now.getTime() - 4 * 3600 * 1000);
+  const mm = edtDate.getUTCMonth() + 1;
+  const dd = edtDate.getUTCDate();
+  const dateLabel = `${mm}/${dd}`;
+  return { isOpen, isPreMarket, dateLabel };
+}
+
 const US_PERIODS = [
   { label: "1D",  range: "2d"  },
   { label: "5D",  range: "5d"  },
@@ -339,6 +358,7 @@ export default function USThemePanel() {
   const categories = [...new Set(US_THEME_GROUPS.map(g => g.cat))];
   const toggleCat  = cat => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
   const allExpanded = categories.every(c => expandedCats[c] !== false);
+  const marketStatus = getUSMarketStatus();
 
   return (
     <div style={{ background: TH.bg, minHeight: "100%", fontFamily: "'Inter', 'Noto Sans KR', sans-serif", padding: "20px 20px 40px" }}>
@@ -347,11 +367,25 @@ export default function USThemePanel() {
 
       {/* 헤더 */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontSize: 16, fontWeight: 800, color: TH.textBright }}>US 테마 스캐너</span>
-          <span style={{ fontSize: 11, color: TH.textDim, marginLeft: 10 }}>
+          <span style={{ fontSize: 11, color: TH.textDim }}>
             {US_THEME_GROUPS.length}개 테마 · {Object.keys(quotes).length}종목
           </span>
+          {/* 장 상태 배지 */}
+          {marketStatus.isOpen ? (
+            <span style={{ fontSize: 11, fontWeight: 700, color: TH.green, background: TH.greenBg, border: `1px solid ${TH.greenBorder}`, padding: "2px 8px", borderRadius: 4 }}>
+              장중 {marketStatus.dateLabel}
+            </span>
+          ) : marketStatus.isPreMarket ? (
+            <span style={{ fontSize: 11, fontWeight: 700, color: TH.yellow, background: TH.yellowBg, border: `1px solid ${TH.yellowBorder}`, padding: "2px 8px", borderRadius: 4 }}>
+              프리마켓 {marketStatus.dateLabel}
+            </span>
+          ) : (
+            <span style={{ fontSize: 11, fontWeight: 700, color: TH.textDim, background: TH.surfaceAlt, border: `1px solid ${TH.border}`, padding: "2px 8px", borderRadius: 4 }}>
+              장마감 {marketStatus.dateLabel} 종가
+            </span>
+          )}
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           {/* 기간 선택 */}

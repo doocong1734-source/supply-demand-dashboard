@@ -1561,7 +1561,7 @@ app.get("/api/naver-themes/refresh", async (req, res) => {
 });
 
 // GET /api/us-theme-quotes  (미국 테마 전광판용 - Yahoo Finance v8 chart API, 인증 불필요)
-const usThemeQuoteCache = new NodeCache({ stdTTL: 300 });
+const usThemeQuoteCache = new NodeCache({ stdTTL: 60 });
 
 // Yahoo Finance v8 chart API (개별 티커, query2 사용시 인증 불필요)
 // range: "2d"(1D), "5d"(5D), "1mo"(1M), "3mo"(3M)
@@ -1661,9 +1661,9 @@ async function refreshUSThemeQuotes(range = "2d") {
     return merged;
 }
 
-// 서버 시작 시 기본 range(1D) 즉시 + 5분마다 갱신
+// 서버 시작 시 기본 range(1D) 즉시 + 1분마다 갱신
 refreshUSThemeQuotes("2d");
-setInterval(() => refreshUSThemeQuotes("2d"), 5 * 60 * 1000);
+setInterval(() => refreshUSThemeQuotes("2d"), 60 * 1000);
 
 app.get("/api/us-theme-quotes", async (req, res) => {
     try {

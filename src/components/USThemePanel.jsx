@@ -329,7 +329,7 @@ export default function USThemePanel() {
 
   useEffect(() => {
     fetchQuotes("2d");
-    const iv = setInterval(() => fetchQuotes(range), 300000);
+    const iv = setInterval(() => fetchQuotes(range), 60000);
     return () => clearInterval(iv);
   }, []);
 

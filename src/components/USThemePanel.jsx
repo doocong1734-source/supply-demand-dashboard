@@ -151,6 +151,70 @@ function calcGroupAvg(group, quotes) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
+function heatColor(pct) {
+  if (pct == null) return { bg: "#e5e7eb", text: "#9ca3af", border: "#d1d5db" };
+  if (pct >= 4)   return { bg: "#064e3b", text: "#fff",     border: "#065f46" };
+  if (pct >= 2.5) return { bg: "#065f46", text: "#fff",     border: "#059669" };
+  if (pct >= 1.5) return { bg: "#059669", text: "#fff",     border: "#34d399" };
+  if (pct >= 0.5) return { bg: "#34d399", text: "#064e3b",  border: "#6ee7b7" };
+  if (pct >= 0)   return { bg: "#d1fae5", text: "#065f46",  border: "#a7f3d0" };
+  if (pct >= -0.5)return { bg: "#fee2e2", text: "#7f1d1d",  border: "#fca5a5" };
+  if (pct >= -1.5)return { bg: "#fca5a5", text: "#7f1d1d",  border: "#f87171" };
+  if (pct >= -2.5)return { bg: "#ef4444", text: "#fff",     border: "#dc2626" };
+  return           { bg: "#7f1d1d", text: "#fff",           border: "#991b1b" };
+}
+
+// ─── 히트맵 섹션 (카테고리별 타일 그리드) ─────────────────────────────
+function HeatmapSection({ cat, groups, quotes }) {
+  const catColor = CATEGORY_COLORS[cat] || TH.blue;
+  const allDailies = groups.flatMap(g => g.tickers.map(t => quotes[t]?.daily).filter(v => v != null));
+  const catAvg = allDailies.length ? allDailies.reduce((a, b) => a + b, 0) / allDailies.length : null;
+  const { bg: catBg, text: catText } = heatColor(catAvg);
+  return (
+    <div style={{ marginBottom: 14 }}>
+      {/* 카테고리 헤더 */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "6px 10px", background: catBg, borderRadius: 6, border: `1px solid ${CATEGORY_COLORS[cat]}33` }}>
+        <span style={{ width: 3, height: 14, background: catColor, borderRadius: 2, flexShrink: 0 }} />
+        <span style={{ fontSize: 12, fontWeight: 800, color: catText }}>{cat}</span>
+        {catAvg != null && (
+          <span style={{ fontSize: 12, fontWeight: 800, color: catText, marginLeft: "auto", fontFamily: "monospace" }}>
+            {catAvg > 0 ? "+" : ""}{catAvg.toFixed(2)}%
+          </span>
+        )}
+      </div>
+      {/* 테마 타일 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(105px, 1fr))", gap: 4 }}>
+        {groups.map(g => {
+          const avg = calcGroupAvg(g, quotes);
+          const { bg, text, border } = heatColor(avg);
+          return (
+            <div key={g.name} title={g.tickers.join(" · ")} style={{
+              background: bg,
+              border: `1px solid ${border}`,
+              borderRadius: 6,
+              padding: "8px 10px",
+              minHeight: 58,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              cursor: "default",
+              transition: "filter 0.1s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.filter = "brightness(0.9)"}
+            onMouseLeave={e => e.currentTarget.style.filter = "none"}
+            >
+              <span style={{ fontSize: 10, fontWeight: 700, color: text, lineHeight: 1.3 }}>{g.name}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: text, fontFamily: "'Inter', monospace" }}>
+                {avg == null ? "—" : `${avg > 0 ? "+" : ""}${avg.toFixed(2)}%`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function RateSpan({ value, size = 13 }) {
   const v = value ?? 0;
   const color = v > 0 ? TH.green : v < 0 ? TH.red : TH.textDim;
@@ -319,6 +383,7 @@ export default function USThemePanel() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [dataTs, setDataTs]       = useState(null);
   const [range, setRange]         = useState("2d");
+  const [viewMode, setViewMode]   = useState("heatmap");
   const [expandedCats, setExpandedCats] = useState(() => {
     const init = {};
     US_THEME_GROUPS.forEach(g => { init[g.cat] = true; });
@@ -388,6 +453,18 @@ export default function USThemePanel() {
           )}
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {/* 뷰 토글 */}
+          <div style={{ display: "flex", background: TH.surfaceAlt, borderRadius: 8, border: `1px solid ${TH.border}`, padding: 3, gap: 2 }}>
+            {[{ key: "heatmap", label: "히트맵" }, { key: "list", label: "리스트" }].map(v => (
+              <button key={v.key} onClick={() => setViewMode(v.key)} style={{
+                padding: "4px 12px", borderRadius: 6, border: "none",
+                background: viewMode === v.key ? TH.textBright : "transparent",
+                color: viewMode === v.key ? "#fff" : TH.textDim,
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                transition: "all 0.12s",
+              }}>{v.label}</button>
+            ))}
+          </div>
           {/* 기간 선택 */}
           <div style={{ display: "flex", background: TH.surfaceAlt, borderRadius: 8, border: `1px solid ${TH.border}`, padding: 3, gap: 2 }}>
             {US_PERIODS.map(p => (
@@ -418,21 +495,37 @@ export default function USThemePanel() {
           >
             새로고침
           </button>
-          <button
-            onClick={() => setExpandedCats(() => {
-              const next = {};
-              categories.forEach(c => { next[c] = !allExpanded; });
-              return next;
-            })}
-            style={{ fontSize: 11, padding: "4px 12px", background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, color: TH.textDim, cursor: "pointer", boxShadow: TH.shadow }}
-          >
-            {allExpanded ? "전체 접기" : "전체 펼치기"}
-          </button>
+          {viewMode === "list" && (
+            <button
+              onClick={() => setExpandedCats(() => {
+                const next = {};
+                categories.forEach(c => { next[c] = !allExpanded; });
+                return next;
+              })}
+              style={{ fontSize: 11, padding: "4px 12px", background: TH.surface, border: `1px solid ${TH.border}`, borderRadius: 6, color: TH.textDim, cursor: "pointer", boxShadow: TH.shadow }}
+            >
+              {allExpanded ? "전체 접기" : "전체 펼치기"}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 카테고리별 섹션 */}
-      {categories.map(cat => (
+      {/* 히트맵 뷰 */}
+      {viewMode === "heatmap" && (
+        <div>
+          {categories.map(cat => (
+            <HeatmapSection
+              key={cat}
+              cat={cat}
+              groups={US_THEME_GROUPS.filter(g => g.cat === cat)}
+              quotes={quotes}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 리스트 뷰 */}
+      {viewMode === "list" && categories.map(cat => (
         <CategorySection
           key={cat}
           cat={cat}

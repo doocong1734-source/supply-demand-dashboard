@@ -298,6 +298,7 @@ export default function USThemePanel() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [dataTs, setDataTs]       = useState(null);
   const [range, setRange]         = useState("2d");
   const [expandedCats, setExpandedCats] = useState(() => {
     const init = {};
@@ -312,8 +313,10 @@ export default function USThemePanel() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setQuotes(data);
+      const { _ts, ...quoteData } = data;
+      setQuotes(quoteData);
       setLastUpdated(new Date());
+      if (_ts) setDataTs(new Date(_ts));
       setError(null);
     } catch (e) {
       setError(e.message);
@@ -370,7 +373,10 @@ export default function USThemePanel() {
             </span>
           )}
           {lastUpdated && !loading && (
-            <span style={{ fontSize: 10, color: TH.textDim }}>{lastUpdated.toLocaleTimeString("ko-KR")}</span>
+            <span style={{ fontSize: 10, color: TH.textDim }}>
+              조회:{lastUpdated.toLocaleTimeString("ko-KR")}
+              {dataTs && <span style={{ color: TH.blue, marginLeft: 4 }}>데이터:{dataTs.toLocaleTimeString("ko-KR")}</span>}
+            </span>
           )}
           <button
             onClick={() => fetchQuotes(range)}

@@ -1578,13 +1578,19 @@ async function fetchYFChartQuote(symbol, range = "2d") {
     const opens  = result.indicators?.quote?.[0]?.open  || [];
     const price  = meta.regularMarketPrice || 0;
     const vol    = meta.regularMarketVolume || 0;
-    const todayOpen = opens[opens.length - 1] || price;
+    const todayOpen = meta.regularMarketOpen || opens[opens.length - 1] || price;
 
     let changePercent, prevClose;
     if (range === "2d") {
-        // 1D: 전일 종가 대비
-        prevClose     = meta.chartPreviousClose || 0;
-        changePercent = prevClose > 0 ? ((price - prevClose) / prevClose) * 100 : 0;
+        // 1D: 전일 종가 대비 — regularMarketPreviousClose가 정확한 전일 종가
+        // chartPreviousClose는 차트 범위 시작 이전 봉 종가로 2거래일 전일 수 있음
+        prevClose     = meta.regularMarketPreviousClose || meta.chartPreviousClose || 0;
+        // Yahoo Finance가 직접 제공하는 changePercent 우선 사용
+        if (meta.regularMarketChangePercent != null) {
+            changePercent = meta.regularMarketChangePercent;
+        } else {
+            changePercent = prevClose > 0 ? ((price - prevClose) / prevClose) * 100 : 0;
+        }
     } else {
         // 5D/1M/3M: 기간 첫 봉 종가 대비
         const firstClose = closes.find(c => c != null) || 0;
@@ -1667,13 +1673,17 @@ setInterval(() => refreshUSThemeQuotes("2d"), 60 * 1000);
 
 app.get("/api/us-theme-quotes", async (req, res) => {
     try {
+        res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+        res.set("Pragma", "no-cache");
         const range = US_THEME_VALID_RANGES.includes(req.query.range) ? req.query.range : "2d";
         const cacheKey = `quotes_${range}`;
         const cached = usThemeQuoteCache.get(cacheKey);
-        if (cached && Object.keys(cached).length > 0) return res.json(cached);
+        if (cached && Object.keys(cached).length > 0) {
+            return res.json({ ...cached, _ts: usThemeQuoteCache.getTtl(cacheKey) ? Date.now() : null });
+        }
         // 캐시 미스 시 즉시 조회 후 반환
         const fresh = await refreshUSThemeQuotes(range);
-        res.json(fresh);
+        res.json({ ...fresh, _ts: Date.now() });
     } catch (e) {
         console.error("/api/us-theme-quotes:", e.message);
         res.status(500).json({ error: e.message });

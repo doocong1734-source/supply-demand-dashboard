@@ -1709,6 +1709,94 @@ const ALL_TICKERS = [
     "EWY", "EWJ", "MCHI", "FXI", "INDA", "EWZ", "EWG", "EFA", "IEUR", "EEM", "EWT", "ASHR", "TUR", "EWH", "ACWI",
 ];
 
+// ─── 한국 주식 스크리너 (TradingView Scanner API) ────────────────
+const TV_COLUMNS = [
+    "name", "description", "close", "market_cap_basic",
+    "RSI", "ADX", "Perf.W", "Perf.1M", "Perf.3M", "Perf.6M", "Perf.Y",
+    "relative_volume_10d_calc", "High.All", "price_52_week_high", "all_time_high",
+    "return_on_equity", "total_revenue_yoy_growth_ttm", "earnings_per_share_diluted_yoy_growth_ttm",
+    "net_margin_ttm", "piotroski_f_score_ttm", "altman_z_score_ttm",
+    "price_earnings_ttm", "price_book_fq", "debt_to_equity",
+    "free_cash_flow_margin_ttm", "price_target_average", "Recommend.All", "sector"
+];
+
+const TV_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+    "Content-Type": "application/json",
+    "Origin": "https://www.tradingview.com",
+    "Referer": "https://www.tradingview.com/",
+};
+
+const KR_SCREENER_MODES = {
+    fundamental: {
+        filter: [
+            { left: "return_on_equity", operation: "greater", right: 10 },
+            { left: "total_revenue_yoy_growth_ttm", operation: "greater", right: 10 },
+            { left: "net_margin_ttm", operation: "greater", right: 5 },
+            { left: "piotroski_f_score_ttm", operation: "greater_or_equal", right: 7 },
+        ],
+        sort: "earnings_per_share_diluted_yoy_growth_ttm",
+    },
+    momentum: {
+        filter: [
+            { left: "RSI", operation: "greater", right: 60 },
+            { left: "ADX", operation: "greater", right: 25 },
+            { left: "Perf.3M", operation: "greater", right: 15 },
+            { left: "close", operation: "greater", right: "SMA200" },
+        ],
+        sort: "Perf.3M",
+    },
+    minervini: {
+        filter: [
+            { left: "close", operation: "greater", right: "SMA200" },
+            { left: "RSI", operation: "in_range", right: [55, 75] },
+            { left: "ADX", operation: "greater", right: 20 },
+            { left: "Perf.Y", operation: "greater", right: 50 },
+            { left: "relative_volume_10d_calc", operation: "less", right: 1.5 },
+        ],
+        sort: "Perf.Y",
+    },
+};
+
+app.post("/api/kr-screener", async (req, res) => {
+    const { mode = "minervini", limit = 50 } = req.body;
+    const cacheKey = `kr-screener-${mode}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
+    const config = KR_SCREENER_MODES[mode] || KR_SCREENER_MODES.minervini;
+    try {
+        const tvRes = await axios.post(
+            "https://scanner.tradingview.com/korea/scan",
+            {
+                filter: config.filter,
+                columns: TV_COLUMNS,
+                sort: { sortBy: config.sort, sortOrder: "desc" },
+                range: [0, Math.min(limit, 100)],
+            },
+            { headers: TV_HEADERS, timeout: 15000 }
+        );
+
+        const stocks = (tvRes.data.data || [])
+            .filter(item => item.d[1]) // description(기업명) 있는 것만
+            .map(item => {
+                const obj = { symbol: item.s };
+                TV_COLUMNS.forEach((col, i) => { obj[col] = item.d[i]; });
+                // ATH 대비 % 계산
+                const ath = obj["all_time_high"] || obj["price_52_week_high"];
+                obj.fromATH = ath ? ((obj.close - ath) / ath * 100) : null;
+                return obj;
+            });
+
+        const result = { stocks, total: tvRes.data.totalCount, mode, ts: Date.now() };
+        cache.set(cacheKey, result, 300); // 5분 캐시
+        res.json(result);
+    } catch (err) {
+        console.error("KR Screener error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`✅ Supply-Demand API Server → http://localhost:${PORT}`);
     if (FINNHUB_TOKEN) {

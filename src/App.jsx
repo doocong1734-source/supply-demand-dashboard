@@ -5,6 +5,7 @@ import UnifiedTable from "./components/UnifiedTable.jsx";
 import ThemePanel from "./components/ThemePanel.jsx";
 import USThemePanel from "./components/USThemePanel.jsx";
 import { calcScore, scoreToSignal } from "./utils/indicators.js";
+import KRScreenerPanel from "./components/KRScreenerPanel.jsx";
 
 // Design System - US.MARKET Terminal (Stitch 2026-04)
 const TH = {
@@ -1436,7 +1437,7 @@ export default function Dashboard() {
         <div className="nav-tabs" style={{ display: "flex", alignItems: "center", height: 52, flex: 1, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
           {[
             ["combined", "Unified"], ["original", "Price"], ["flow", "Flow"], ["watchlist", "Watchlist"],
-            ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"], ["themes", "KR테마"], ["usthemes", "US테마"],
+            ["rankings", "Rankings"], ["mscore", "M-Score"], ["trigger", "Trigger"], ["screener", "Screener"], ["mijoomo", "Mijoomo"], ["themes", "KR테마"], ["usthemes", "US테마"], ["krscreener", "🇰🇷 KR스크리너"],
           ].map(([id, label]) => (
             <button key={id} onClick={() => setViewMode(id)}
               style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 14, height: 52, padding: "0 11px", background: "transparent", border: "none", borderBottom: viewMode === id ? `2px solid ${TH.primary}` : "2px solid transparent", color: viewMode === id ? TH.primary : TH.textDim, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0 }}>
@@ -1471,7 +1472,7 @@ export default function Dashboard() {
       )}
 
       {/* ═══ LEFT PANEL ═══ */}
-      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes" || viewMode === "krscreener") ? undefined : viewMode === "combined" ? 920 : 780, flex: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes" || viewMode === "krscreener") ? 1 : undefined, borderRight: (viewMode === "rankings" || viewMode === "screener" || viewMode === "mijoomo" || viewMode === "mscore" || viewMode === "trigger" || viewMode === "watchlist" || viewMode === "themes" || viewMode === "usthemes" || viewMode === "krscreener") ? "none" : `1px solid ${TH.borderLight}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Header - Sub controls */}
         <div style={{ padding: "8px 10px", background: TH.surfaceAlt, borderBottom: `1px solid ${TH.outlineVar}`, flexShrink: 0 }}>
           {(viewMode === "combined" || viewMode === "flow") && (
@@ -1684,6 +1685,13 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ── 한국 주식 스크리너 ── */}
+          {viewMode === "krscreener" && (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" }}>
+              <KRScreenerPanel />
+            </div>
+          )}
+
           {/* ── 스크리너 뷰 (항상 마운트, 탭 전환 시 상태 유지) ── */}
           <div style={{ display: viewMode === "screener" ? "flex" : "none", flex: 1, height: "100%", overflow: "hidden" }}>
             <ScreenerPanel lists={lists} activeIdx={activeIdx} addToList={addToList} addList={addList} isFavorite={isFavorite} isInAnyList={isInAnyList} toggleFavorite={toggleFavorite} onGoMScore={() => setViewMode("mscore")} />
@@ -1714,7 +1722,7 @@ export default function Dashboard() {
           )}
 
           {/* ── 메인 테이블 뷰 (Stitch Design) ── */}
-          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "usthemes" && viewMode !== "mscore" && viewMode !== "trigger" && data && (
+          {viewMode !== "watchlist" && viewMode !== "rankings" && viewMode !== "screener" && viewMode !== "mijoomo" && viewMode !== "themes" && viewMode !== "usthemes" && viewMode !== "mscore" && viewMode !== "trigger" && viewMode !== "krscreener" && data && (
             <UnifiedTable C={TH} data={data} viewMode={viewMode} collapsed={collapsed} setCollapsed={setCollapsed}
               sortStates={sortStates} handleSort={handleSort} getSortIndicator={getSortIndicator}
               filterRows={filterRows} getSortedRows={getSortedRows} selected={selected} handleSelectRow={handleSelectRow}
